@@ -11,7 +11,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = MongoClient("mongodb+srv://thanakon3:Teera0Chineseboi@cluster0.mft4otf.mongodb.net/")
+MONGO_URI = os.getenv("mongodb+srv://thanakon3:Teera0Chineseboi@cluster0.mft4otf.mongodb.net/")
+client = MongoClient(MONGO_URI)
 db = client["MobileLegend_wiki_backend"]
 collection = db["characterinfos"]
 
