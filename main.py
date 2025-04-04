@@ -17,6 +17,7 @@ MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 db = client["MobileLegend_wiki_backend"]
 collection = db["characterinfos"]
+collection = db["itemInfo"]
 
 def fix_id(doc):
     doc["_id"] = str(doc["_id"])
@@ -41,7 +42,25 @@ def get_heroes_by_type(type_name: str):
         raise HTTPException(status_code=404, detail=f"No heroes found in type: {type_name}")
     return [fix_id(hero) for hero in heroes]
 
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 
+@app.get("/items")
+def get_all_items():
+    items = list(collection.find())
+    return [fix_id(item) for item in items]
 
+@app.get("/items/name/{name}")
+def get_item_by_name(name: str):
+    item = collection.find_one({"ItemName": name})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return fix_id(item)
+
+@app.get("/items/type/{type_name}")
+def get_Items_by_type(type_name: str):
+    items = list(collection.find({"Type": type_name}))
+    if not items:
+        raise HTTPException(status_code=404, detail=f"No Items found in type: {type_name}")
+    return [fix_id(item) for item in items]
 
