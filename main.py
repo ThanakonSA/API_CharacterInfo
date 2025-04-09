@@ -23,7 +23,7 @@ def fix_id(doc):
     doc["_id"] = str(doc["_id"])
     return doc
 
-# -------------------- HEROES --------------------
+# ------------------ _id HEROES --------------------
 @app.get("/heroes/{hero_id}")
 def get_hero_by_id(hero_id: str):
     from bson import ObjectId  # ยังคงต้องใช้สำหรับการค้นหา
@@ -35,7 +35,7 @@ def get_hero_by_id(hero_id: str):
     if not hero:
         raise HTTPException(status_code=404, detail="Hero not found")
     return fix_id(hero)  # แปลง _id เป็นสตริงก่อนส่งออก
-# -------------------------------------------------------
+# ------------------- HEROES -----------------------------
 @app.get("/heroes")
 def get_all_heroes():
     heroes = list(heroes_collection.find())
@@ -54,6 +54,20 @@ def get_heroes_by_type(type_name: str):
     if not heroes:
         raise HTTPException(status_code=404, detail=f"No heroes found in type: {type_name}")
     return [fix_id(hero) for hero in heroes]
+
+
+# ----------------- _id ITEMS ROUTES ------------------
+@app.get("/items/{item_id}")
+def get_item_by_id(item_id: str):
+    from bson import ObjectId  # ใช้สำหรับการค้นหา _id
+    try:
+        item = items_collection.find_one({"_id": ObjectId(item_id)})
+    except:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return fix_id(item)  # แปลง _id เป็นสตริงก่อนส่งออก
 
 # -------------------- ITEMS --------------------
 @app.get("/items")
