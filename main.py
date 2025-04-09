@@ -24,6 +24,18 @@ def fix_id(doc):
     return doc
 
 # -------------------- HEROES --------------------
+@app.get("/heroes/{hero_id}")
+def get_hero_by_id(hero_id: str):
+    from bson import ObjectId  # ยังคงต้องใช้สำหรับการค้นหา
+    try:
+        hero = heroes_collection.find_one({"_id": ObjectId(hero_id)})
+    except:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    if not hero:
+        raise HTTPException(status_code=404, detail="Hero not found")
+    return fix_id(hero)  # แปลง _id เป็นสตริงก่อนส่งออก
+# -------------------------------------------------------
 @app.get("/heroes")
 def get_all_heroes():
     heroes = list(heroes_collection.find())
