@@ -18,6 +18,8 @@ client = MongoClient(MONGO_URI)
 db = client["MobileLegend_wiki_backend"]
 heroes_collection = db["characterinfos"]
 items_collection = db["itemInfo"]
+heroesmain_collection = db["heroesmain"]
+heroesdetail_collection = db["heroesdetail"]
 
 def fix_id(doc):
     doc["_id"] = str(doc["_id"])
@@ -85,6 +87,73 @@ def get_item_by_name(name: str):
 @app.get("/items/type/{type_name}")
 def get_items_by_type(type_name: str):
     items = list(items_collection.find({"Type": type_name}))
+
+# -------------------- _id HEROESMain ROUTES --------------------
+@app.get("/heroesmain/{hero_id}")
+def get_hero_by_id_main(hero_id: str):
+    from bson import ObjectId  # ยังคงต้องใช้สำหรับการค้นหา
+    try:
+        heromain = heroesmain_collection.find_one({"_id": ObjectId(hero_id)})
+    except:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    if not heromain:
+        raise HTTPException(status_code=404, detail="Hero not found")
+    return fix_id(heromain)  # แปลง _id เป็นสตริงก่อนส่งออก
+
+# ------------------------ HEROESMain ROUTES ----------------------------
+@app.get("/heroesmain")
+def get_all_heroes_main():
+    heroesmain = list(heroesmain_collection.find())
+    return [fix_id(heromain) for heromain in heroesmain]
+
+@app.get("/heroesmain/name/{name}")
+def get_hero_by_name_main(name: str):
+    heromain = heroesmain_collection.find_one({"HeroName": name})
+    if not heromain:
+        raise HTTPException(status_code=404, detail="Hero not found")
+    return fix_id(heromain)
+
+@app.get("/heroesmain/type/{type_name}")
+def get_heroes_by_type_main(type_name: str):
+    heroesmain = list(heroesmain_collection.find({"Type": type_name}))
+    if not heroesmain:
+        raise HTTPException(status_code=404, detail=f"No heroes found in type: {type_name}")
+    return [fix_id(heromain) for heromain in heroesmain]
+
+
+# -------------------- _id HEROESDetail ROUTES --------------------
+@app.get("/heroesdetail/{hero_id}")
+def get_hero_by_id_detail(hero_id: str):  # เปลี่ยนชื่อฟังก์ชัน
+    from bson import ObjectId  # ยังคงต้องใช้สำหรับการค้นหา
+    try:
+        herodetail = heroesdetail_collection.find_one({"_id": ObjectId(hero_id)})
+    except:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    if not herodetail:
+        raise HTTPException(status_code=404, detail="Hero not found")
+    return fix_id(herodetail)  # แปลง _id เป็นสตริงก่อนส่งออก
+
+# ------------------------ HEROESDetail ROUTES ----------------------------
+@app.get("/heroesdetail")
+def get_all_heroes_detail():  # เปลี่ยนชื่อฟังก์ชัน
+    heroesdetail = list(heroesdetail_collection.find())
+    return [fix_id(herodetail) for herodetail in heroesdetail]
+
+@app.get("/heroesdetail/name/{name}")
+def get_hero_by_name_detail(name: str):  # เปลี่ยนชื่อฟังก์ชัน
+    herodetail = heroesdetail_collection.find_one({"HeroName": name})
+    if not herodetail:
+        raise HTTPException(status_code=404, detail="Hero not found")
+    return fix_id(herodetail)
+
+@app.get("/heroesdetail/type/{type_name}")
+def get_heroes_by_type_detail(type_name: str):  # เปลี่ยนชื่อฟังก์ชัน
+    heroesdetail = list(heroesdetail_collection.find({"Type": type_name}))
+    if not heroesdetail:
+        raise HTTPException(status_code=404, detail=f"No heroes found in type: {type_name}")
+    return [fix_id(herodetail) for herodetail in heroesdetail]
     if not items:
         raise HTTPException(status_code=404, detail=f"No items found in type: {type_name}")
     return [fix_id(item) for item in items]
