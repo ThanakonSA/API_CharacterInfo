@@ -25,18 +25,17 @@ def fix_id(doc):
     doc["_id"] = str(doc["_id"])
     return doc
 
-# ------------------ _id HEROES --------------------
+# ------------------ Heroes_id HEROES --------------------
 @app.get("/heroes/{hero_id}")
-def get_hero_by_id(hero_id: str):
-    from bson import ObjectId  # ยังคงต้องใช้สำหรับการค้นหา
+def get_hero_heroes(hero_id: str):
     try:
-        hero = heroes_collection.find_one({"_id": ObjectId(hero_id)})
-    except:
-        raise HTTPException(status_code=400, detail="Invalid ID format")
-
-    if not hero:
-        raise HTTPException(status_code=404, detail="Hero not found")
-    return fix_id(hero)  # แปลง _id เป็นสตริงก่อนส่งออก
+        hero = heroes_collection.find_one({"Hero_ID": hero_id})
+        if not hero:
+            raise HTTPException(status_code=404, detail="Hero not found")
+        return fix_id(hero)
+    except Exception as e:
+        print(f"[ERROR /heroes]: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 # ------------------- HEROES -----------------------------
 @app.get("/heroes")
 def get_all_heroes():
@@ -88,18 +87,17 @@ def get_item_by_name(name: str):
 def get_items_by_type(type_name: str):
     items = list(items_collection.find({"Type": type_name}))
 
-# -------------------- _id HEROESMain ROUTES --------------------
+# -------------------- Heroesmain_id HEROESMain ROUTES --------------------
 @app.get("/heroesmain/{hero_id}")
-def get_hero_by_id_main(hero_id: str):
-    from bson import ObjectId  # ยังคงต้องใช้สำหรับการค้นหา
+def get_hero_heroesmain(hero_id: str):
     try:
-        heromain = heroesmain_collection.find_one({"_id": ObjectId(hero_id)})
-    except:
-        raise HTTPException(status_code=400, detail="Invalid ID format")
-
-    if not heromain:
-        raise HTTPException(status_code=404, detail="Hero not found")
-    return fix_id(heromain)  # แปลง _id เป็นสตริงก่อนส่งออก
+        hero = heroes_collection.find_one({"Hero_ID": hero_id})
+        if not hero:
+            raise HTTPException(status_code=404, detail="Hero not found")
+        return fix_id(hero)
+    except Exception as e:
+        print(f"[ERROR /heroesmain]: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 # ------------------------ HEROESMain ROUTES ----------------------------
 @app.get("/heroesmain")
@@ -122,18 +120,17 @@ def get_heroes_by_type_main(type_name: str):
     return [fix_id(heromain) for heromain in heroesmain]
 
 
-# -------------------- _id HEROESDetail ROUTES --------------------
+# -------------------- HeroesDetail_id HEROESDetail ROUTES --------------------
 @app.get("/heroesdetail/{hero_id}")
-def get_hero_by_id_detail(hero_id: str):  # เปลี่ยนชื่อฟังก์ชัน
-    from bson import ObjectId  # ยังคงต้องใช้สำหรับการค้นหา
+def get_hero_detail(hero_id: str):
     try:
-        herodetail = heroesdetail_collection.find_one({"_id": ObjectId(hero_id)})
-    except:
-        raise HTTPException(status_code=400, detail="Invalid ID format")
-
-    if not herodetail:
-        raise HTTPException(status_code=404, detail="Hero not found")
-    return fix_id(herodetail)  # แปลง _id เป็นสตริงก่อนส่งออก
+        hero = heroes_collection.find_one({"Hero_ID": hero_id})
+        if not hero:
+            raise HTTPException(status_code=404, detail="Hero not found")
+        return fix_id(hero)
+    except Exception as e:
+        print(f"[ERROR /heroesdetail]: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 # ------------------------ HEROESDetail ROUTES ----------------------------
 @app.get("/heroesdetail")
