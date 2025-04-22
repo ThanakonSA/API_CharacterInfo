@@ -91,10 +91,10 @@ def get_items_by_type(type_name: str):
 @app.get("/heroesmain/{hero_id}")
 def get_hero_heroesmain(hero_id: str):
     try:
-        hero = heroes_collection.find_one({"Hero_ID": hero_id})
+        hero = heroesdetail_collection.find_one({"Hero_ID": hero_id})
         if not hero:
             raise HTTPException(status_code=404, detail="Hero not found")
-        return fix_id(hero)
+        return fix_id(hero) 
     except Exception as e:
         print(f"[ERROR /heroesmain]: {e}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
