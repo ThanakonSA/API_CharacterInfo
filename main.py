@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from pymongo import MongoClient
 from fastapi.middleware.cors import CORSMiddleware
-from herodetailmodel import HeroDetailModel
-from heromainmodel import HeroMainModel
+from herodetailmodel import HeroDetailModel, convert_row_to_heroesdetail
+from heromainmodel import HeroMainModel, convert_row_to_heroesmain
 from typing import List
-from herofullmodel import HeroFullModel, convert_row_to_hero
+from herofullmodel import HeroFullModel, convert_row_to_heroes
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -29,13 +29,13 @@ def fix_id(doc):
     return doc
 
 # ------------------ Heroes_id HEROES --------------------
-@app.get("/heroes/{hero_id}", response_model=HeroFullModel)
+@app.get("/heroes/{hero_id}", response_model=HeroFullModel) #ตัวดึง Hero_ID
 def get_hero_by_id(hero_id: str):
     doc = heroes_collection.find_one({"Hero_ID": hero_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Hero not found")
     flat = { k: str(v) for k, v in doc.items() if k != "_id" }
-    return convert_row_to_hero(flat)
+    return convert_row_to_heroes(flat)
 # ------------------- HEROES -----------------------------
 @app.get("/heroes", response_model=List[HeroFullModel])
 def list_all_heroes():
@@ -43,9 +43,9 @@ def list_all_heroes():
     heroes = []
     for doc in docs:
         flat = { k: str(v) for k, v in doc.items() if k != "_id" }
-        heroes.append(convert_row_to_hero(flat))
+        heroes.append(convert_row_to_heroes(flat))
     return heroes
-
+    
 # ----------------- _id ITEMS ROUTES ------------------
 @app.get("/items/{item_id}")
 def get_item_by_id(item_id: str):
@@ -76,80 +76,41 @@ def get_item_by_name(name: str):
 def get_items_by_type(type_name: str):
     items = list(items_collection.find({"Type": type_name}))
 
-# -------------------- Heroesmain_id HEROESMain ROUTES --------------------
-@app.get("/heroesmain/{hero_id}", response_model=HeroDetailModel)
-def get_hero_heroesmain(hero_id: str):
-    try:
-        hero = heroes_collection.find_one({"Hero_ID": hero_id})  # เปลี่ยนเป็น heroes_collection
-        if not hero:
-            raise HTTPException(status_code=404, detail="Hero not found")
-        return HeroDetailModel(**fix_id(hero))  # ใช้ HeroDetailModel
-    except Exception as e:
-        print(f"[ERROR /heroesmain]: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
+# -------------------- Heroesmain_id HEROESMain ROUTES --------------------
+@app.get("/heroesmain/{hero_id}", response_model=HeroDetailModel) #ตัวดึง Hero_ID
+def get_hero_heroesmain(hero_id: str):
+    doc = heroes_collection.find_one({"Hero_ID": hero_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Hero not found")
+    flat = { k: str(v) for k, v in doc.items() if k != "_id" }
+    return convert_row_to_heroesdetail(flat) #แปลงเป็น HeroDetailModel
 # ------------------------ HEROESMain ROUTES ----------------------------
 @app.get("/heroesmain", response_model=List[HeroMainModel])
-def get_all_heroes_main():
-    try:
-        heroesmain = list(heroes_collection.find())
-        return [HeroMainModel(**fix_id(heromain)) for heromain in heroesmain]  # ใช้ HeroMainModel
-    except Exception as e:
-        print(f"[ERROR /heroesmain]: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
-
-@app.get("/heroesmain/name/{name}", response_model=HeroMainModel)
-def get_hero_by_name_main(name: str):
-    try:
-        heromain = heroes_collection.find_one({"HeroName": name})
-        if not heromain:
-            raise HTTPException(status_code=404, detail="Hero not found")
-        return HeroMainModel(**fix_id(heromain))  # ใช้ HeroMainModel
-    except Exception as e:
-        print(f"[ERROR /heroesmain/name]: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
-
-@app.get("/heroesmain/type/{type_name}", response_model=List[HeroMainModel])
-def get_heroes_by_type_main(type_name: str):
-    try:
-        heroesmain = list(heroes_collection.find({"Type": type_name}))
-        if not heroesmain:
-            raise HTTPException(status_code=404, detail=f"No heroes found in type: {type_name}")
-        return [HeroMainModel(**fix_id(heromain)) for heromain in heroesmain]  # ใช้ HeroMainModel
-    except Exception as e:
-        print(f"[ERROR /heroesmain/type]: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
-        
-
+def list_all_heroes():
+        docs = list(heroes_collection.find())
+        heroes = []
+        for doc in docs:
+            flat = {k: str(v) for k, v in doc.items() if k != "_id"}
+            heroes.append(convert_row_to_heroesmain(flat))
+        return heroes
+    
 # -------------------- HeroesDetail_id HEROESDetail ROUTES --------------------
-@app.get("/heroesdetail/{hero_id}")
-def get_hero_detail(hero_id: str):
-    try:
-        hero = heroes_collection.find_one({"Hero_ID": hero_id}) # เป็นการดึงข้อมูลจาก heroes แทน heroesdetail
-        if not hero:
-            raise HTTPException(status_code=404, detail="Hero not found")
-        return fix_id(hero)
-    except Exception as e:
-        print(f"[ERROR /heroesdetail]: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+@app.get("/heroesdetail/{hero_id}", response_model=HeroFullModel) #ตัวดึง Hero_ID
+def get_hero_heroesdetail(hero_id: str):
+    doc = heroes_collection.find_one({"Hero_ID": hero_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Hero not found")
+    flat = { k: str(v) for k, v in doc.items() if k != "_id" }
+    return convert_row_to_heroes(flat)
 
 # ------------------------ HEROESDetail ROUTES ----------------------------
 @app.get("/heroesdetail", response_model=List[HeroDetailModel])
-def get_all_heroes_detail():
-    heroesdetail = list(heroes_collection.find())  # เปลี่ยนเป็น heroes_collection
-    return [HeroDetailModel(**fix_id(herodetail)) for herodetail in heroesdetail]
-
-@app.get("/heroesdetail/name/{name}", response_model=HeroDetailModel)
-def get_hero_by_name_detail(name: str):
-    herodetail = heroes_collection.find_one({"HeroName": name})  # เปลี่ยนเป็น heroes_collection
-    if not herodetail:
-        raise HTTPException(status_code=404, detail="Hero not found")
-    return HeroDetailModel(**fix_id(herodetail))
-
-@app.get("/heroesdetail/type/{type_name}", response_model=List[HeroDetailModel])
-def get_heroes_by_type_detail(type_name: str):
-    heroesdetail = list(heroes_collection.find({"Type": type_name}))  # เปลี่ยนเป็น heroes_collection
-    if not heroesdetail:
-        raise HTTPException(status_code=404, detail=f"No heroes found in type: {type_name}")
-    return [HeroDetailModel(**fix_id(herodetail)) for herodetail in heroesdetail]
+def list_all_heroes():
+    docs = list(heroes_collection.find())
+    heroes = []
+    for doc in docs:
+        flat = { k: str(v) for k, v in doc.items() if k != "_id" }
+        heroes.append(convert_row_to_heroesdetail(flat))
+    return heroes
 
