@@ -63,7 +63,7 @@ class HeroFullModel(BaseModel):
     images: HeroImages
 
 
-def convert_row_to_hero(row: dict) -> dict:
+def convert_row_to_heroes(row: dict) -> dict:
     return {
         "herobase": {
             "hero_id":   row.get("Hero_ID", ""),
