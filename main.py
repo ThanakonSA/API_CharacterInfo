@@ -19,10 +19,9 @@ app.add_middleware(
 MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 db = client["MobileLegend_wiki_backend"]
-heroes_collection = db["characterinfos"]
-items_collection = db["itemInfo"]
-heroesmain_collection = db["heroesmain"]
-heroesdetail_collection = db["heroesdetail"]
+heroes_collection = db["heroesinfos"]
+items_collection = db["itemsInfos"]
+
 
 def fix_id(doc):
     doc["_id"] = str(doc["_id"])
