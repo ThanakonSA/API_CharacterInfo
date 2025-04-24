@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from herodetailmodel import HeroDetailModel
 from heromainmodel import HeroMainModel
 from typing import List
+from herofullmodel import HeroFullModel, convert_row_to_hero
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -28,36 +29,22 @@ def fix_id(doc):
     return doc
 
 # ------------------ Heroes_id HEROES --------------------
-@app.get("/heroes/{hero_id}")
+@app.get("/heroes/{hero_id}", response_model=HeroFullModel)
 def get_hero_by_id(hero_id: str):
-    try:
-        hero = heroes_collection.find_one({"Hero_ID": hero_id}) # เป็นการดึงข้อมูลจาก heroes แทน heroesdetail
-        if not hero:
-            raise HTTPException(status_code=404, detail="Hero not found")
-        return fix_id(hero)
-    except Exception as e:
-        print(f"[ERROR /heroesdetail]: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
-
-# ------------------- HEROES -----------------------------
-@app.get("/heroes")
-def get_all_heroes():
-    heroes = list(heroes_collection.find())
-    return [fix_id(hero) for hero in heroes]
-
-@app.get("/heroes/name/{name}")
-def get_hero_by_name(name: str):
-    hero = heroes_collection.find_one({"HeroName": name})
-    if not hero:
+    doc = heroes_collection.find_one({"Hero_ID": hero_id})
+    if not doc:
         raise HTTPException(status_code=404, detail="Hero not found")
-    return fix_id(hero)
-
-@app.get("/heroes/type/{type_name}")
-def get_heroes_by_type(type_name: str):
-    heroes = list(heroes_collection.find({"Type": type_name}))
-    if not heroes:
-        raise HTTPException(status_code=404, detail=f"No heroes found in type: {type_name}")
-    return [fix_id(hero) for hero in heroes]
+    flat = { k: str(v) for k, v in doc.items() if k != "_id" }
+    return convert_row_to_hero(flat)
+# ------------------- HEROES -----------------------------
+@app.get("/heroes", response_model=List[HeroFullModel])
+def list_all_heroes():
+    docs = list(heroes_collection.find())
+    heroes = []
+    for doc in docs:
+        flat = { k: str(v) for k, v in doc.items() if k != "_id" }
+        heroes.append(convert_row_to_hero(flat))
+    return heroes
 
 # ----------------- _id ITEMS ROUTES ------------------
 @app.get("/items/{item_id}")
