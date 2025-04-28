@@ -6,6 +6,8 @@ from herodetailmodel import HeroDetailModel, convert_row_to_heroesdetail
 from heromainmodel import HeroMainModel
 from typing import List
 from herofullmodel import HeroFullModel, convert_row_to_heroes
+from Itemsfullmodel import ItemFullModel, convert_row_to_item
+
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -101,32 +103,21 @@ def list_all_heroes():
         heroes.append(convert_row_to_heroesdetail(flat))
     return heroes
 
-# ----------------- _id ITEMS ROUTES ------------------
-@app.get("/items/{item_id}")
-def get_item_by_id(item_id: str):
-    from bson import ObjectId  # ใช้สำหรับการค้นหา _id
-    try:
-        item = items_collection.find_one({"_id": ObjectId(item_id)})
-    except:
-        raise HTTPException(status_code=400, detail="Invalid ID format")
-
-    if not item:
+# ----------------- Item_id ITEMS ROUTES ------------------
+@app.get("/items/{item_id}", response_model=ItemFullModel)
+def get_item_full(item_id: str):
+    doc = items_collection.find_one({"Item_ID": item_id})
+    if not doc:
         raise HTTPException(status_code=404, detail="Item not found")
-    return fix_id(item)  # แปลง _id เป็นสตริงก่อนส่งออก
+    flat = { k: str(v) for k, v in doc.items() if k != "_id" }
+    return convert_row_to_item(flat)
 
-# -------------------- ITEMS --------------------
-@app.get("/items")
-def get_all_items():
-    items = list(items_collection.find())
-    return [fix_id(item) for item in items]
-
-@app.get("/items/name/{name}")
-def get_item_by_name(name: str):
-    item = items_collection.find_one({"ItemName": name})
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return fix_id(item)
-
-@app.get("/items/type/{type_name}")
-def get_items_by_type(type_name: str):
-    items = list(items_collection.find({"Type": type_name}))
+# -------------------- ITEMS ROUTES --------------------
+@app.get("/items", response_model=List[ItemFullModel])
+def list_all_items():
+    docs = list(items_collection.find())
+    items = []
+    for doc in docs:
+        flat = { k: str(v) for k, v in doc.items() if k != "_id" }
+        items.append(convert_row_to_item(flat))
+    return items
