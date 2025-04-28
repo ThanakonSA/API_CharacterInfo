@@ -2,7 +2,8 @@ from fastapi import FastAPI, HTTPException
 from pymongo import MongoClient
 from fastapi.middleware.cors import CORSMiddleware
 from herodetailmodel import HeroDetailModel, convert_row_to_heroesdetail
-from heromainmodel import HeroMainModel, convert_row_to_heroesmain
+# from heromainmodel import HeroMainModel, convert_row_to_heroesmain
+from heromainmodel import HeroMainModel
 from typing import List
 from herofullmodel import HeroFullModel, convert_row_to_heroes
 import os
@@ -57,12 +58,29 @@ def get_hero_heroesmain(hero_id: str):
 # ------------------------ HEROESMain ROUTES ----------------------------
 @app.get("/heroesmain", response_model=List[HeroMainModel])
 def list_all_heroes():
-        docs = list(heroes_collection.find())
-        heroes = []
-        for doc in docs:
-            flat = {k: str(v) for k, v in doc.items() if k != "_id"}
-            heroes.append(convert_row_to_heroesmain(flat))
-        return heroes
+    docs = list(heroes_collection.find())
+    heroes = [
+        HeroMainModel(
+            hero_id=doc.get("Hero_ID", ""),
+            hero_name=doc.get("HeroName", ""),
+            role=doc.get("Role", ""),
+            specialty=doc.get("Specialty", ""),
+            lane_recc=doc.get("Lane_Recc", ""),
+            icon=doc.get("Iconhero", ""),
+            full=doc.get("Imagehero", "")
+        )
+        for doc in docs
+    ]
+    return heroes
+
+# @app.get("/heroesmain", response_model=List[HeroMainModel])
+# def list_all_heroes():
+#         docs = list(heroes_collection.find())
+#         heroes = []
+#         for doc in docs:
+#             flat = {k: str(v) for k, v in doc.items() if k != "_id"}
+#             heroes.append(convert_row_to_heroesmain(flat))
+#         return heroes
     
 # -------------------- HeroesDetail_id HEROESDetail ROUTES --------------------
 @app.get("/heroesdetail/{hero_id}", response_model=HeroFullModel) #ตัวดึง Hero_ID
