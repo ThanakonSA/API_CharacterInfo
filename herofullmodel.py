@@ -47,6 +47,7 @@ class HeroStats(BaseModel):
     magic_power: str
     attack_speed: str
     attack_speed_ratio: str
+    critical_chance: str
     critical_damage: str
     movement_speed: str
     basic_attack_type: str
@@ -120,6 +121,7 @@ def convert_row_to_heroes(row: dict) -> dict:
             "magic_power":         row.get("Magic_Power", ""),
             "attack_speed":        row.get("Attack_Speed", ""),
             "attack_speed_ratio":  row.get("Attack_Speed_Ratio", ""),
+            "critical_chance":     row.get("Critical_Chance", ""),
             "critical_damage":     row.get("Critical_Damage", ""),
             "movement_speed":      row.get("Movement_Speed", ""),
             "basic_attack_type":   row.get("Basic_attack_type", ""),
