@@ -6,6 +6,8 @@ class HeroBase(BaseModel):
     role: str
     specialty: str
     lane_recc: str
+    icon: str
+    full: str
 
 class HeroPrice(BaseModel):
     battle_points: str
@@ -50,17 +52,12 @@ class HeroStats(BaseModel):
     basic_attack_type: str
     basic_attack_range: str
 
-class HeroImages(BaseModel):
-    icon: str
-    full: str
-
 class HeroFullModel(BaseModel):
     herobase: HeroBase
     price: HeroPrice
     skills: HeroSkills
     ratings: HeroRatings
     stats: HeroStats
-    images: HeroImages
 
 
 def convert_row_to_heroes(row: dict) -> dict:
@@ -71,6 +68,8 @@ def convert_row_to_heroes(row: dict) -> dict:
             "role":      row.get("Role", ""),
             "specialty": row.get("Specialty", ""),
             "lane_recc": row.get("Lane_Recc", ""),
+            "icon": row.get("Iconhero", ""),
+            "full": row.get("Imagehero", "")
         },
         "price": {
             "battle_points":  row.get("Price_Battle_Points", ""),
@@ -125,9 +124,5 @@ def convert_row_to_heroes(row: dict) -> dict:
             "movement_speed":      row.get("Movement_Speed", ""),
             "basic_attack_type":   row.get("Basic_attack_type", ""),
             "basic_attack_range":  row.get("Basic_Attack_Range", ""),
-        },
-        "images": {
-            "icon": row.get("Iconhero", ""),
-            "full": row.get("Imagehero", "")
         }
     }
