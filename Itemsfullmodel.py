@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class ItemBase(BaseModel):
+class ItemInfo(BaseModel):
     item_id:   str
     item_name: str
     type_item: str
@@ -32,13 +32,13 @@ class ItemStats(BaseModel):
     slow_reduction:    str
 
 class ItemFullModel(BaseModel):
-    base:  ItemBase
+    iteminfo:  ItemInfo
     passive: ItemPassive
     stats: ItemStats
 
 def convert_row_to_item(row: dict) -> dict:
     return {
-        "base": {
+        "iteminfo": {
             "item_id":    row.get("Item_ID", ""),
             "item_name":  row.get("ItemName", ""),
             "type_item":  row.get("Type_Item", ""),
