@@ -28,7 +28,7 @@ tags_metadata = [
 ]
 
 app = FastAPI(
-    title="MLBB API",
+    title="MobileLegend API",
     version="1.0.0",
     openapi_tags=tags_metadata,
     docs_url="/docs",
