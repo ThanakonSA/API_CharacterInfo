@@ -23,7 +23,7 @@ tags_metadata = [
     },
     {
         "name": "items",
-        "description": "จัดการข้อมูลไอเท็ม"
+        "description": "จัดการข้อมูลไอเทม"
     },
 ]
 
