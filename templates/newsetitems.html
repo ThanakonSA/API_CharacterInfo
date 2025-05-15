@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Create New Item Set</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/newsetitems.js" defer></script>
+</head>
+<body>
+    <h1>สร้างชุดไอเทมใหม่</h1>
+    <form id="itemSetForm" method="post" action="/newsetitems">
+        <!-- Hero Selector -->
+        <div id="hero-select">
+            <label for="heroSelect">เลือกฮีโร่:</label>
+            <select id="heroSelect" name="hero_id">
+                {% for hero in heroes %}
+                <option 
+                    value="{{ hero.hero_id }}"
+                    data-icon="{{ hero.icon }}"
+                >{{ hero.hero_name }}</option>
+                {% endfor %}
+            </select>
+            {% if heroes %}
+                <img id="selectedHeroIcon"
+                    src="{{ heroes[0].icon }}"
+                    alt="Hero Icon">
+            {% else %}
+                <p>ยังไม่มีข้อมูลฮีโร่</p>
+            {% endif %}
+        </div>
+
+        <!-- Item Slots -->
+        <div id="item-slots">
+            {% for i in range(6) %}
+            <div class="item-slot">
+                <label>ไอเทม {{ i+1 }}:</label>
+                <select class="itemSelect" name="item{{ i+1 }}">
+                    <option value="" data-icon="">-- None --</option>
+                    {% for itm in items %}
+                    <option 
+                        value="{{ itm.iteminfo.item_id }}"
+                        data-icon="{{ itm.iteminfo.icon }}"
+                    >{{ itm.iteminfo.item_name }}</option>
+                    {% endfor %}
+                </select>
+                <img class="selectedItemIcon" src="" alt="Item Icon">
+            </div>
+            {% endfor %}
+        </div>
+
+        <button type="submit">บันทึกไอเทม</button>
+    </form>
+</body>
+</html>
