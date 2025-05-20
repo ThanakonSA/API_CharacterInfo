@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>สร้างชุดไอเทมใหม่</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <!-- **อย่าลืม** defer -->
+  <script src="/static/js/newsetitems.js" defer></script>
+</head>
+<body>
+  <h1>สร้างชุดไอเทมใหม่</h1>
+
+  <!-- — ถ้ามี success ให้โชว์ข้อความ — -->
+  {% if request.query_params.get("success") %}
+    <div style="color: green; margin-bottom:1em;">
+      บันทึกสำเร็จ 🎉
+    </div>
+  {% endif %}
+
+  <form id="itemSetForm" method="post" action="/newsetitems">
+    <!-- — เลือกฮีโร่ — -->
+    <label for="heroSelect">เลือกฮีโร่:</label>
+    <select id="heroSelect" name="hero_id">
+      {% for hero in heroes %}
+        <option
+          value="{{ hero.hero_id }}"
+          data-icon="{{ hero.icon }}"
+         {# ใช้ bracket notation เพื่ออ่าน key 'hero_id' จาก dict #}
+         {% if existing and existing['hero_id'] == hero.hero_id %}selected{% endif %}
+        >
+          {{ hero.hero_name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <!-- — ซ่อนชื่อฮีโร่ — -->
+    <input
+      type="hidden"
+      name="hero_name"
+      id="heroName"
+     {# อ่าน existing['hero_name'] จาก dict #}
+     value="{{ existing['hero_name'] if existing else heroes[0].hero_name }}"
+    />
+
+    <!-- — แสดงไอคอนฮีโร่ — -->
+    <div>
+      <img
+        id="heroIcon"
+        {# อ่าน existing['hero_icon'] จาก dict #}
+       src="{{ existing['hero_icon'] if existing else heroes[0].icon }}"
+        alt="Hero Icon"
+        width="100"
+      />
+    </div>
+
+    <!-- — เลือกไอเท็ม 6 ชิ้น — -->
+    <div class="items-row">
+      {% for i in range(1,7) %}
+        <div class="item-col">
+          <label for="itemSelect{{ i }}">ไอเทม {{ i }}:</label>
+          <select id="itemSelect{{ i }}" name="item{{ i }}">
+            <option value="">-- None --</option>
+            {% for itm in items %}
+              <option
+                value="{{ itm.iteminfo.item_id }}"
+                data-icon="{{ itm.iteminfo.icon }}"
+               {# ใช้ bracket notation เพื่อเข้าถึง list 'items' #}
+                {% if existing and existing['items'][i-1]['iteminfo']['item_id'] == itm.iteminfo.item_id %}
+                 selected
+               {% endif %}
+              >
+                {{ itm.iteminfo.item_name }}
+              </option>
+            {% endfor %}
+          </select>
+
+          <!-- — รูปไอคอนไอเท็ม — -->
+          <div>
+            <img
+              id="itemIcon{{ i }}"
+              {# bracket notation เช่นกัน #}
+                src="{% if existing and existing['items'][i-1]['iteminfo']['icon'] %}{{ existing['items'][i-1]['iteminfo']['icon'] }}{% else %}{% endif %}"
+              alt="Item Icon"
+              width="80"
+            />
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <button type="submit">บันทึกไอเทม</button>
+  </form>
+</body>
+</html>

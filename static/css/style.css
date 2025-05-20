@@ -1,0 +1,13 @@
+#hero-select, .item-slot {
+  display: inline-block;
+  margin: 8px;
+  text-align: center;
+}
+
+#selectedHeroIcon, .selectedItemIcon {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+}
