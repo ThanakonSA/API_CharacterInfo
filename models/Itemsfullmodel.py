@@ -40,9 +40,10 @@ class ItemFullModel(BaseModel):
 class ItemMainModel(BaseModel):
     iteminfo:  ItemInfo
 
-class SetItemModel(BaseModel):
-    hero_id: str
-    item_ids: List[str]
+# class ItemBuild(BaseModel):
+#     hero_id:      str
+#     hero_name:    str
+#     items:        List[ItemMainModel]
 
 def convert_row_to_item(row: dict) -> dict:
     return {

@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException, Body, Request, Form
 from pymongo import MongoClient, DESCENDING, ReturnDocument
 from fastapi.middleware.cors import CORSMiddleware
-from models.setmodel import CreateItemBuild, ItemBuild, PatchItemBuild
+from models.setmodel import CreateItemBuild, PatchItemBuild, ItemBuild
 from models.heromainmodel import HeroMainModel
 from models.herofullmodel import HeroFullModel, convert_row_to_heroes
-from models.Itemsfullmodel import ItemFullModel, ItemInfo, ItemMainModel, SetItemModel, convert_row_to_item
+from models.Itemsfullmodel import ItemFullModel, ItemInfo, ItemMainModel, convert_row_to_item
 from typing import List, Optional
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -249,24 +249,9 @@ def create_set_items(
         )
         items_models.append(ItemMainModel(iteminfo=info).dict())
 
-    # 3) สร้าง setitems_id อัตโนมัติใน collection counters
-    counter = setitems_collection.find_one_and_update(
-        {"_id": "setitems_id"},
-        {"$inc": {"seq": 1}},
-        upsert=True,
-        return_document=ReturnDocument.AFTER
-    )
-    setid = counter["seq"]
-
-    # 4) เตรียมเอกสารที่จะบันทึก (เพิ่ม hero_name และ hero_icon)
-    #    ถ้าอยากได้ hero_icon ให้ดึงจาก collection heroesinfos ด้วย hero_id
-    hero_doc = heroes_collection.find_one({"Hero_ID": hero_id})
-    icon_url = hero_doc.get("Iconhero", "") if hero_doc else ""
     record = {
-        "setitems_id": setid,
         "hero_id":     hero_id,
         "hero_name":   hero_name,
-        "hero_icon":   icon_url,
         "items":       items_models
     }
 
@@ -276,7 +261,7 @@ def create_set_items(
     # 6) ส่งกลับหรือ redirect ตามต้องการ
     return RedirectResponse("/newsetitems?success=1", status_code=303)
 
-#--------------------- Setitems_id SETITEMS ROUTES --------------------
+#--------------------- Setitems SETITEMS ROUTES --------------------
 # ——— ดึงชุดไอเทมตาม id ———
 @app.get(
     "/setitems",
@@ -285,26 +270,66 @@ def create_set_items(
     description="คืนค่าเป็นลิสต์ของทุกเซตไอเทมในฐานข้อมูล"
 )
 def list_item_builds():
-    # ดึงเฉพาะเอกสารชุดไอเท็มจริง (มี setitems_id)
-    # และระบุให้คืน setitems_id, hero_id, hero_name, items
-    cursor = setitems_collection.find(
-        {"setitems_id": {"$exists": True}},
-        {
-            "_id": 0,
-            "setitems_id": 1,
-            "hero_id":     1,
-            "hero_name":   1,
-            "items":       1
-        }
-    )
-    return list(cursor)
+    # ไม่กรองด้วย setitems_id, และตัด _id ออก
+    docs = list(setitems_collection.find({}, {"_id": 0}))
+    return docs
     
+#--------------------- Setitems_id SETITEMS ROUTES --------------------
+@app.get(
+    "/setitems/{hero_id}",
+    response_model=List[ItemBuild],
+    summary="ดึงชุดไอเท็มของฮีโร่โดย hero_id",
+    description="รับ hero_id ใน path → คืนชุดไอเท็มทั้งหมดที่เก็บไว้สำหรับฮีโร่คนนั้น"
+)
+def get_setitems_by_hero(hero_id: str):
+    """
+    1. @app.get("/setitems/{hero_id}")  
+       - กำหนดว่า endpoint นี้รับ HTTP GET บน URL /setitems/<hero_id>  
+       - ค่าใน {} จะถูกแมปเป็นตัวแปร hero_id ของฟังก์ชัน  
+
+    2. response_model=List[ItemBuild]  
+       - บอก FastAPI ให้ใช้ Pydantic Model `ItemBuild` ในการตรวจสอบ (validation)  
+       - List[...] แปลว่าคืนเป็นลิสต์ของ ItemBuild  
+
+    3. def get_setitems_by_hero(hero_id: str):  
+       - ฟังก์ชันนี้รับพารามิเตอร์ hero_id (string)  
+
+    4. docs = list(setitems_collection.find(
+           {"hero_id": hero_id},     # เงื่อนไขค้นว่าฟิลด์ hero_id ในเอกสารต้องเท่ากับค่าที่ path ส่งมา
+           {"_id": 0}                # projection: ตัด _id ของ MongoDB ออก ไม่ส่งกลับให้ client
+       ))
+       - `find()` จะคืน cursor ของหลายเอกสาร
+       - เราแปลงเป็น Python list เพื่อเตรียม return  
+
+    5. if not docs:
+         raise HTTPException(
+             status_code=404,
+             detail=f"No setitems found for hero_id={hero_id}"
+         )
+       - ถ้าไม่มีเอกสารชุดไหนเลย ให้ตอบ 404 Not Found พร้อมข้อความ  
+
+    6. return docs
+       - คืนลิสต์ของ dict ที่ตรงกับโครงสร้าง ItemBuild
+    """
+    docs = list(setitems_collection.find(
+        {"hero_id": hero_id},
+        {"_id": 0}
+    ))
+
+    if not docs:
+        # ถ้าไม่เจอชุดไอเท็มของ hero_id นี้เลย
+        raise HTTPException(
+            status_code=404,
+            detail=f"No setitems found for hero_id={hero_id}"
+        )
+
+    return docs
 
 
 #-------------------- edit setitems_id SETITEMS ROUTES --------------------
 @app.put(
     "/sets/{set_id}",
-    response_model=ItemBuild,
+    response_model=CreateItemBuild,
     summary="อัปเดตเซตไอเทม",
 )
 def update_item_build(set_id: int, payload: CreateItemBuild):
@@ -336,7 +361,7 @@ def update_item_build(set_id: int, payload: CreateItemBuild):
 #-----------------------------------------------------------------------
 @app.patch(
     "/sets/{set_id}",
-    response_model=ItemBuild,
+    response_model=CreateItemBuild,
     summary="อัปเดตเฉพาะบางฟิลด์ของชุดไอเทม",
 )
 def patch_item_build(set_id: int, payload: PatchItemBuild):
