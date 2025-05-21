@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class HeroBase(BaseModel):
     hero_id: str
@@ -50,12 +50,13 @@ class HeroStats(BaseModel):
     physical_attack: str
     magic_power: str
     attack_speed: str
-    attack_speed_ratio: str
-    critical_chance: str
-    critical_damage: str
+    attack_speed_ratio:  str
+    critical_chance:     str
+    critical_damage:     str
     movement_speed: str
     basic_attack_type: str
     basic_attack_range: str
+
 
 class HeroFullModel(BaseModel):
     herobase: HeroBase
@@ -144,9 +145,9 @@ def convert_row_to_heroes(row: dict) -> dict:
             "physical_attack":     row.get("Physical_Attack", ""),
             "magic_power":         row.get("Magic_Power", ""),
             "attack_speed":        row.get("Attack_Speed", ""),
-            "attack_speed_ratio%":  row.get("Attack_Speed_Ratio%", ""),
-            "critical_chance%":     row.get("Critical_Chance%", ""),
-            "critical_damage%":     row.get("Critical_Damage%", ""),
+            "attack_speed_ratio": row.get("Attack_Speed_Ratio%", ""),
+            "critical_chance":     row.get("Critical_Chance%", ""),
+            "critical_damage":     row.get("Critical_Damage%", ""),
             "movement_speed":      row.get("Movement_Speed", ""),
             "basic_attack_type":   row.get("Basic_attack_type", ""),
             "basic_attack_range":  row.get("Basic_Attack_Range", ""),
