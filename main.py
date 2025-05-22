@@ -43,6 +43,7 @@ db = client["MobileLegend_wiki_backend"]
 heroes_collection = db["heroesinfos"]
 items_collection = db["itemsInfos"]
 setitems_collection = db["setitems"]
+counters_collection  = db.counters
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -229,6 +230,7 @@ def create_set_items(
     item4:   str = Form(None),
     item5:   str = Form(None),
     item6:   str = Form(None),
+    
 ):
     # 1) เก็บเฉพาะไอดีที่เลือกมา
     raw_ids = [item1, item2, item3, item4, item5, item6]
@@ -249,11 +251,29 @@ def create_set_items(
         )
         items_models.append(ItemMainModel(iteminfo=info).dict())
 
+    # ─────────────── วิธีที่ 1: counters per hero ───────────────
+    counter = counters_collection.find_one_and_update(
+        {"_id": f"set_{hero_name}"},
+        {"$inc": {"seq": 1}},
+        upsert=True,
+        return_document=ReturnDocument.AFTER
+    )
+    hero_seq1 = counter["seq"]           # ตัวแปรเก็บผลวิธีที่ 1
+
+
+    # 3) ดึง hero_icon จาก collection heroesinfos
+    hero_doc = heroes_collection.find_one({"Hero_ID": hero_id})
+    icon_url = hero_doc.get("Iconhero", "") if hero_doc else ""
+
+    # 4) สร้าง record ใหม่ (ตัด setitems_id ออก เพราะใช้ counter ของเราแทน)
     record = {
-        "hero_id":     hero_id,
-        "hero_name":   hero_name,
-        "items":       items_models
+        f"set_{hero_name}": hero_seq1,
+        "hero_id":         hero_id,
+        "hero_name":       hero_name,
+        "hero_icon":       icon_url,
+        "items":           items_models
     }
+    
 
     # 5) บันทึกลง MongoDB (sync PyMongo)
     setitems_collection.insert_one(record)
@@ -265,14 +285,34 @@ def create_set_items(
 # ——— ดึงชุดไอเทมตาม id ———
 @app.get(
     "/setitems",
-    response_model=List[ItemBuild],
+    response_model=List[dict],
     summary="ดึงข้อมูลชุดไอเทมทั้งหมด",
     description="คืนค่าเป็นลิสต์ของทุกเซตไอเทมในฐานข้อมูล"
 )
 def list_item_builds():
-    # ไม่กรองด้วย setitems_id, และตัด _id ออก
-    docs = list(setitems_collection.find({}, {"_id": 0}))
-    return docs
+    # 1) ดึงเฉพาะชุดไอเท็มที่บันทึกจริง
+    docs = list(setitems_collection.find(
+        {},             # เอา filter setitems_id ทิ้ง
+        {"_id": 0}      # projection: เอา _id ออกให้หมด
+    ))
+
+    results = []
+    for doc in docs:
+        # 2) หาชื่อฮีโร่ และดึง seq จากคีย์ไดนามิก
+        hero = doc["hero_name"]
+        seq_key = f"set_{hero}"
+        seq = doc.pop(seq_key, None)
+
+        # 3) ถ้ามี field set_count ก็ลบทิ้ง
+        doc.pop("set_count", None)
+
+        # 4) สร้าง dict ใหม่ให้คีย์ไดนามิกอยู่บรรทัดแรก
+        reordered = { seq_key: seq, **doc }
+
+        results.append(reordered)
+
+    return results
+
     
 #--------------------- Setitems_id SETITEMS ROUTES --------------------
 @app.get(
@@ -282,48 +322,25 @@ def list_item_builds():
     description="รับ hero_id ใน path → คืนชุดไอเท็มทั้งหมดที่เก็บไว้สำหรับฮีโร่คนนั้น"
 )
 def get_setitems_by_hero(hero_id: str):
-    """
-    1. @app.get("/setitems/{hero_id}")  
-       - กำหนดว่า endpoint นี้รับ HTTP GET บน URL /setitems/<hero_id>  
-       - ค่าใน {} จะถูกแมปเป็นตัวแปร hero_id ของฟังก์ชัน  
-
-    2. response_model=List[ItemBuild]  
-       - บอก FastAPI ให้ใช้ Pydantic Model `ItemBuild` ในการตรวจสอบ (validation)  
-       - List[...] แปลว่าคืนเป็นลิสต์ของ ItemBuild  
-
-    3. def get_setitems_by_hero(hero_id: str):  
-       - ฟังก์ชันนี้รับพารามิเตอร์ hero_id (string)  
-
-    4. docs = list(setitems_collection.find(
-           {"hero_id": hero_id},     # เงื่อนไขค้นว่าฟิลด์ hero_id ในเอกสารต้องเท่ากับค่าที่ path ส่งมา
-           {"_id": 0}                # projection: ตัด _id ของ MongoDB ออก ไม่ส่งกลับให้ client
-       ))
-       - `find()` จะคืน cursor ของหลายเอกสาร
-       - เราแปลงเป็น Python list เพื่อเตรียม return  
-
-    5. if not docs:
-         raise HTTPException(
-             status_code=404,
-             detail=f"No setitems found for hero_id={hero_id}"
-         )
-       - ถ้าไม่มีเอกสารชุดไหนเลย ให้ตอบ 404 Not Found พร้อมข้อความ  
-
-    6. return docs
-       - คืนลิสต์ของ dict ที่ตรงกับโครงสร้าง ItemBuild
-    """
+    # 1) ดึงเฉพาะชุดไอเท็มที่บันทึกจริง (กรองให้มี field setitems_id)
     docs = list(setitems_collection.find(
-        {"hero_id": hero_id},
-        {"_id": 0}
+        {"hero_id": hero_id},   # filter โดย hero_id
+        {"_id": 0}              # ไม่เอา _id
     ))
 
-    if not docs:
-        # ถ้าไม่เจอชุดไอเท็มของ hero_id นี้เลย
-        raise HTTPException(
-            status_code=404,
-            detail=f"No setitems found for hero_id={hero_id}"
-        )
+    results = []
+    for doc in docs:
+        hero = doc["hero_name"]
+        seq_key = f"set_{hero}"
+        seq = doc.pop(seq_key, None)
 
-    return docs
+        # ลบ set_count ถ้ามี
+        doc.pop("set_count", None)
+
+        reordered = { seq_key: seq, **doc }
+        results.append(reordered)
+
+    return results
 
 
 #-------------------- edit setitems_id SETITEMS ROUTES --------------------
