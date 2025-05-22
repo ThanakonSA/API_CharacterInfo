@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Body, Request, Form
 from pymongo import MongoClient, DESCENDING, ReturnDocument
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
 from models.setmodel import CreateItemBuild, PatchItemBuild, ItemBuild
 from models.heromainmodel import HeroMainModel
 from models.herofullmodel import HeroFullModel, convert_row_to_heroes
@@ -267,7 +268,7 @@ def create_set_items(
 
     # 4) สร้าง record ใหม่ (ตัด setitems_id ออก เพราะใช้ counter ของเราแทน)
     record = {
-        f"set_{hero_name}": hero_seq1,
+        "set":             hero_seq1,
         "hero_id":         hero_id,
         "hero_name":       hero_name,
         "hero_icon":       icon_url,
@@ -289,29 +290,24 @@ def create_set_items(
     summary="ดึงข้อมูลชุดไอเทมทั้งหมด",
     description="คืนค่าเป็นลิสต์ของทุกเซตไอเทมในฐานข้อมูล"
 )
-def list_item_builds():
-    # 1) ดึงเฉพาะชุดไอเท็มที่บันทึกจริง
-    docs = list(setitems_collection.find(
-        {},             # เอา filter setitems_id ทิ้ง
-        {"_id": 0}      # projection: เอา _id ออกให้หมด
-    ))
+def get_setitems():
+    # 1) ดึงเอกสารทั้งหมด (ไม่เอา _id ของ MongoDB)
+    docs = list(setitems_collection.find({}, {"_id": 0}))
 
     results = []
     for doc in docs:
-        # 2) หาชื่อฮีโร่ และดึง seq จากคีย์ไดนามิก
-        hero = doc["hero_name"]
-        seq_key = f"set_{hero}"
-        seq = doc.pop(seq_key, None)
+        # 2) ดึงค่า "set" (จำนวนครั้งที่บันทึก) ออกมานำมาไว้หน้าสุด
+        set_val = doc.pop("set", None)
 
-        # 3) ถ้ามี field set_count ก็ลบทิ้ง
+        # 3) ถ้ามี field อื่นที่ไม่ต้องการ เช่น set_count ให้ลบทิ้ง
         doc.pop("set_count", None)
 
-        # 4) สร้าง dict ใหม่ให้คีย์ไดนามิกอยู่บรรทัดแรก
-        reordered = { seq_key: seq, **doc }
-
+        # 4) สร้าง dict ใหม่: ให้ "set" มาอยู่บรรทัดแรก ตามด้วย field อื่นๆ
+        reordered = {"set": set_val, **doc}
         results.append(reordered)
 
-    return results
+    # 5) คืนค่าเป็น JSON
+    return jsonable_encoder(results)
 
     
 #--------------------- Setitems_id SETITEMS ROUTES --------------------
