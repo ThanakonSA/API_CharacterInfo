@@ -5,7 +5,7 @@
   <title>สร้างชุดไอเทมใหม่</title>
   <link rel="stylesheet" href="/static/css/style.css" />
   <!-- **อย่าลืม** defer -->
-  <script src="/static/js/newsetitems.js" defer></script>
+  <script src="/static/js/build_set_items.js" defer></script>
 </head>
 <body>
   <h1>สร้างชุดไอเทมใหม่</h1>
@@ -17,7 +17,7 @@
     </div>
   {% endif %}
 
-  <form id="itemSetForm" method="post" action="/newsetitems">
+  <form id="new-set-form" action="/build_set_items" method="post" enctype="multipart/form-data">
     <!-- — เลือกฮีโร่ — -->
     <label for="heroSelect">เลือกฮีโร่:</label>
     <select id="heroSelect" name="hero_id">

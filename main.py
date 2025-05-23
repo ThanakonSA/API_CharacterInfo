@@ -68,9 +68,6 @@ def fix_id(doc):
 
 items: List[ItemMainModel] = [
     ItemMainModel(iteminfo=itm) for itm in [
-        # สร้าง ItemInfo ด้วยข้อมูลจริง
-        # ตัวอย่าง:
-        # ItemInfo(item_id="item1", item_name="Sword", type_item="Attack", price="1000", icon="/static/icons/item1.png")
     ]
 ]
 
@@ -178,8 +175,8 @@ def list_all_items():
     return items
 
 #----------------------------------------------------------------------
-@app.get("/newsetitems", response_class=HTMLResponse)
-async def new_set_items(request: Request):
+@app.get("/build_set_items", response_class=HTMLResponse)
+async def build_set_items_page(request: Request):
     # ── ดึงฮีโร่จาก collection จริง ────────────────────────────────
     hero_docs = list(heroes_collection.find({}))
     heroes = [
@@ -213,7 +210,7 @@ async def new_set_items(request: Request):
        sort=[("setitems_id", DESCENDING)]
     )
 
-    return templates.TemplateResponse("newsetitems.html", {
+    return templates.TemplateResponse("build_set_items.html", {
         "request": request,
         "heroes": heroes,
         "items": items,
@@ -221,7 +218,7 @@ async def new_set_items(request: Request):
     })
 
 # รับข้อมูลฟอร์มเมื่อกด Submit
-@app.post("/newsetitems")
+@app.post("/build_set_items")
 def create_set_items(
     hero_id: str = Form(...),
     hero_name: str = Form(...),
@@ -280,7 +277,7 @@ def create_set_items(
     setitems_collection.insert_one(record)
 
     # 6) ส่งกลับหรือ redirect ตามต้องการ
-    return RedirectResponse("/newsetitems?success=1", status_code=303)
+    return RedirectResponse("/build_set_items?success=1", status_code=303)
 
 #--------------------- Setitems SETITEMS ROUTES --------------------
 # ——— ดึงชุดไอเทมตาม id ———

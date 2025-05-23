@@ -2,7 +2,8 @@ import pandas as pd
 from pymongo import MongoClient
 
 file_path = "HeroInfo.xlsx"
-df_main = pd.read_excel(file_path, sheet_name="Heroes")
+df_main = pd.read_excel(file_path,sheet_name="Heroes",
+    converters={"Attack_Speed": lambda x: "{:.2f}".format(float(x)) if pd.notnull(x) else "",})
 df_icon = pd.read_excel(file_path, sheet_name="HeroesIcon")
 
 
