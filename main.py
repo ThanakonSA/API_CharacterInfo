@@ -142,7 +142,6 @@ def list_all_heroes():
     return heroes
 
 
-
 # -------------------- Item_id ITEMS ROUTES --------------------
 @app.get(
     "/items/{item_id}", 
@@ -174,7 +173,7 @@ def list_all_items():
         items.append(convert_row_to_item(flat))
     return items
 
-#----------------------------------------------------------------------
+#-------------------- Build_Set_Items -----------------------------------
 @app.get("/build_set_items", response_class=HTMLResponse)
 async def build_set_items_page(request: Request):
     # ── ดึงฮีโร่จาก collection จริง ────────────────────────────────
@@ -280,7 +279,6 @@ def create_set_items(
     return RedirectResponse("/build_set_items?success=1", status_code=303)
 
 #--------------------- Setitems SETITEMS ROUTES --------------------
-# ——— ดึงชุดไอเทมตาม id ———
 @app.get(
     "/setitems",
     response_model=List[dict],
@@ -310,30 +308,25 @@ def get_setitems():
 #--------------------- Setitems_id SETITEMS ROUTES --------------------
 @app.get(
     "/setitems/{hero_id}",
-    response_model=List[ItemBuild],
+    response_model=List[dict],
     summary="ดึงชุดไอเท็มของฮีโร่โดย hero_id",
     description="รับ hero_id ใน path → คืนชุดไอเท็มทั้งหมดที่เก็บไว้สำหรับฮีโร่คนนั้น"
 )
 def get_setitems_by_hero(hero_id: str):
-    # 1) ดึงเฉพาะชุดไอเท็มที่บันทึกจริง (กรองให้มี field setitems_id)
+    # ดึงข้อมูลจาก MongoDB (รวมฟิลด์ "set" ที่เราบันทึกไว้)
     docs = list(setitems_collection.find(
-        {"hero_id": hero_id},   # filter โดย hero_id
-        {"_id": 0}              # ไม่เอา _id
+        {"hero_id": hero_id},
+        {"_id": 0, "set": 1, "hero_id": 1, "hero_name": 1, "hero_icon": 1, "items": 1}
     ))
-
     results = []
     for doc in docs:
-        hero = doc["hero_name"]
-        seq_key = f"set_{hero}"
-        seq = doc.pop(seq_key, None)
-
-        # ลบ set_count ถ้ามี
-        doc.pop("set_count", None)
-
-        reordered = { seq_key: seq, **doc }
+        # ดึงค่า set ออกมาก่อน (แล้วลบออกจาก dict หลัก)
+        set_val = doc.pop("set", None)
+        # สร้าง dict ใหม่ ให้ "set" อยู่บรรทัดแรก
+        reordered = {"set": set_val, **doc}
         results.append(reordered)
-
-    return results
+    # แปลงเป็น JSON-friendly แล้วคืนกลับไป
+    return jsonable_encoder(results)
 
 
 #-------------------- edit setitems_id SETITEMS ROUTES --------------------
