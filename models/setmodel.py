@@ -1,16 +1,24 @@
 from pydantic import BaseModel
-from typing import List, Optional
-from .Itemsfullmodel import ItemMainModel
+from typing import List, Optional, Dict, Any
+from .Itemsfullmodel import ItemMainModel, ItemInfo
 
 
 class CreateItemBuild(BaseModel):
     hero_id: str
     hero_name:    str
-    item_ids: List[str]       # รายการ Item_ID ที่ต้องการใส่ (length = 6)
+    item_ids: List[str]
 
 class PatchItemBuild(BaseModel):
     hero_id:      Optional[str]                 = None
-    item_ids:     Optional[List[Optional[str]]] = None  # ถ้าใส่ ก็ต้องมี length=6
+    item_ids:     Optional[List[Optional[str]]] = None
+
+class ItemInfoSimple(BaseModel):
+    iteminfo: Dict[str, str]
+class NewSetItems(BaseModel):
+    hero_id:   str
+    hero_name: str
+    hero_icon: str
+    items:     List[ItemInfoSimple]
 
 
 class ItemBuild(BaseModel):
@@ -34,7 +42,6 @@ class ItemBuild(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                # ตัวอย่างข้อมูล (static) เพื่อให้ Swagger UI แสดงเป็น placeholder
                 "hero_id": "Hero ID",
                 "item_ids": [
                     "Item ID",

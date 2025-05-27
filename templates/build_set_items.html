@@ -1,94 +1,63 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>สร้างชุดไอเทมใหม่</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
-  <!-- **อย่าลืม** defer -->
-  <script src="/static/js/build_set_items.js" defer></script>
 </head>
 <body>
   <h1>สร้างชุดไอเทมใหม่</h1>
 
-  <!-- — ถ้ามี success ให้โชว์ข้อความ — -->
-  {% if request.query_params.get("success") %}
-    <div style="color: green; margin-bottom:1em;">
-      บันทึกสำเร็จ 🎉
-    </div>
-  {% endif %}
-
-  <form id="new-set-form" action="/build_set_items" method="post" enctype="multipart/form-data">
-    <!-- — เลือกฮีโร่ — -->
-    <label for="heroSelect">เลือกฮีโร่:</label>
-    <select id="heroSelect" name="hero_id">
-      {% for hero in heroes %}
-        <option
-          value="{{ hero.hero_id }}"
-          data-icon="{{ hero.icon }}"
-         {# ใช้ bracket notation เพื่ออ่าน key 'hero_id' จาก dict #}
-         {% if existing and existing['hero_id'] == hero.hero_id %}selected{% endif %}
-        >
-          {{ hero.hero_name }}
-        </option>
-      {% endfor %}
-    </select>
-
-    <!-- — ซ่อนชื่อฮีโร่ — -->
-    <input
-      type="hidden"
-      name="hero_name"
-      id="heroName"
-     {# อ่าน existing['hero_name'] จาก dict #}
-     value="{{ existing['hero_name'] if existing else heroes[0].hero_name }}"
+  <form id="build-set-form">
+    <!-- HERO -->
+    <label for="hero_id">เลือกฮีโร่:</label>
+    <select name="hero_id" id="hero_id">
+      {% for h in heroes %}
+    <option 
+      value="{{ h.hero_id }}"
+      data-icon="{{ h.icon }}"
+      data-name="{{ h.hero_name }}"
+    >{{ h.hero_name }}</option>
+    {% endfor %}
+  </select>
+  <br/> 
+    <img 
+      id="hero_icon_img"
+      src="{% if heroes|length > 0 %}{{ heroes[0].icon }}{% else %}/static/placeholder.png{% endif %}"
+      alt="Hero Icon"
+      width="100"
     />
+  <!-- ซ่อนชื่อและลิงก์รูป เพื่อส่งเป็น form-data -->
+<input type="hidden" name="hero_name" id="hero_name" value="{% if heroes|length>0 %}{{ heroes[0].hero_name }}{% endif %}">
+<input type="hidden" name="hero_icon" id="hero_icon" value="{% if heroes|length>0 %}{{ heroes[0].icon }}{% endif %}">
+    <hr>
 
-    <!-- — แสดงไอคอนฮีโร่ — -->
-    <div>
-      <img
-        id="heroIcon"
-        {# อ่าน existing['hero_icon'] จาก dict #}
-       src="{{ existing['hero_icon'] if existing else heroes[0].icon }}"
-        alt="Hero Icon"
-        width="100"
-      />
-    </div>
+    <!-- ITEMS 1–6 -->
+    {% for i in range(1,7) %}
+    <label>ไอเทม {{ i }}:
+      <select name="item{{ i }}" id="item{{ i }}">
+        {% for it in items %}
+        <option value="{{ it.iteminfo.item_id }}" data-icon="{{ it.iteminfo.icon }}">
+          {{ it.iteminfo.item_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <br>
+    <img id="item{{ i }}_img" src="{% if items %}{{ items[0].iteminfo.icon }}{% endif %}" width="80">
+    <hr>
+    {% endfor %}
 
-    <!-- — เลือกไอเท็ม 6 ชิ้น — -->
-    <div class="items-row">
-      {% for i in range(1,7) %}
-        <div class="item-col">
-          <label for="itemSelect{{ i }}">ไอเทม {{ i }}:</label>
-          <select id="itemSelect{{ i }}" name="item{{ i }}">
-            <option value="">-- None --</option>
-            {% for itm in items %}
-              <option
-                value="{{ itm.iteminfo.item_id }}"
-                data-icon="{{ itm.iteminfo.icon }}"
-               {# ใช้ bracket notation เพื่อเข้าถึง list 'items' #}
-                {% if existing and existing['items'][i-1]['iteminfo']['item_id'] == itm.iteminfo.item_id %}
-                 selected
-               {% endif %}
-              >
-                {{ itm.iteminfo.item_name }}
-              </option>
-            {% endfor %}
-          </select>
+    <!-- HIDDEN FIELDS สำหรับส่งชื่อและ icon -->
+    <input type="hidden" name="hero_name" id="hero_name">
+    <input type="hidden" name="hero_icon" id="hero_icon">
+    {% for i in range(1,7) %}
+    <input type="hidden" name="item{{ i }}_icon" id="item{{ i }}_icon">
+    {% endfor %}
 
-          <!-- — รูปไอคอนไอเท็ม — -->
-          <div>
-            <img
-              id="itemIcon{{ i }}"
-              {# bracket notation เช่นกัน #}
-                src="{% if existing and existing['items'][i-1]['iteminfo']['icon'] %}{{ existing['items'][i-1]['iteminfo']['icon'] }}{% else %}{% endif %}"
-              alt="Item Icon"
-              width="80"
-            />
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-
-    <button type="submit">บันทึกไอเทม</button>
+    <button id="btn-save">บันทึกไอเทม</button>
   </form>
+
+  <!-- โหลด JS -->
+  <script src="{{ url_for('static', path='js/build_set_items.js') }}"></script>
 </body>
 </html>

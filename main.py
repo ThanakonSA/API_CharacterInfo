@@ -2,14 +2,15 @@ from fastapi import FastAPI, HTTPException, Body, Request, Form
 from pymongo import MongoClient, DESCENDING, ReturnDocument
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
-from models.setmodel import CreateItemBuild, PatchItemBuild, ItemBuild
+from models.setmodel import CreateItemBuild, PatchItemBuild, ItemBuild, NewSetItems
 from models.heromainmodel import HeroMainModel
 from models.herofullmodel import HeroFullModel, convert_row_to_heroes
 from models.Itemsfullmodel import ItemFullModel, ItemInfo, ItemMainModel, convert_row_to_item
 from typing import List, Optional
+from bson import ObjectId
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 
 import os
@@ -43,8 +44,8 @@ client = MongoClient("mongodb+srv://thanakon3:Teera0Chineseboi@cluster0.mft4otf.
 db = client["MobileLegend_wiki_backend"]
 heroes_collection = db["heroesinfos"]
 items_collection = db["itemsInfos"]
-setitems_collection = db["setitems"]
-counters_collection  = db.counters
+setitems_collection  = db["setitems"]
+counters_collection  = db["counters"]
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -206,7 +207,7 @@ async def build_set_items_page(request: Request):
         for doc in item_docs
     ]
     existing = setitems_collection.find_one(
-       sort=[("setitems_id", DESCENDING)]
+    sort=[("set", DESCENDING)]
     )
 
     return templates.TemplateResponse("build_set_items.html", {
@@ -218,65 +219,38 @@ async def build_set_items_page(request: Request):
 
 # รับข้อมูลฟอร์มเมื่อกด Submit
 @app.post("/build_set_items")
-def create_set_items(
-    hero_id: str = Form(...),
-    hero_name: str = Form(...),
-    item1:   str = Form(None),
-    item2:   str = Form(None),
-    item3:   str = Form(None),
-    item4:   str = Form(None),
-    item5:   str = Form(None),
-    item6:   str = Form(None),
-    
-):
-    # 1) เก็บเฉพาะไอดีที่เลือกมา
-    raw_ids = [item1, item2, item3, item4, item5, item6]
-    ids     = [i for i in raw_ids if i]
+async def build_set_items(request: Request):
+    payload = await request.json()
+    hero_id   = payload["hero_id"]
+    hero_name = payload["hero_name"]
+    hero_icon = payload["hero_icon"]
+    items     = payload.get("items", [])
 
-    # 2) ดึงข้อมูลเต็มจาก collection itemsInfos แล้วสร้าง ItemMainModel
-    items_models = []
-    for iid in ids:
-        doc = items_collection.find_one({"Item_ID": iid})
-        if not doc:
-            continue
-        info = ItemInfo(
-            item_id   = doc.get("Item_ID", ""),
-            item_name = doc.get("ItemName", ""),
-            type_item = doc.get("Type_Item", ""),
-            price     = str(doc.get("Price", "")),
-            icon      = doc.get("Icon_Item", "")
-        )
-        items_models.append(ItemMainModel(iteminfo=info).dict())
+    # หาชุดล่าสุดของฮีโร่นี้ แล้ว +1
+    last = list(setitems_collection
+                .find({"hero_name": hero_name})
+                .sort("set", -1)
+                .limit(1))
+    next_set = (last[0]["set"] if last else 0) + 1
 
-    # ─────────────── วิธีที่ 1: counters per hero ───────────────
-    counter = counters_collection.find_one_and_update(
+    # อัปเดต counters
+    counters_collection.update_one(
         {"_id": f"set_{hero_name}"},
-        {"$inc": {"seq": 1}},
-        upsert=True,
-        return_document=ReturnDocument.AFTER
+        {"$set": {"seq": next_set}},
+        upsert=True
     )
-    hero_seq1 = counter["seq"]           # ตัวแปรเก็บผลวิธีที่ 1
 
-
-    # 3) ดึง hero_icon จาก collection heroesinfos
-    hero_doc = heroes_collection.find_one({"Hero_ID": hero_id})
-    icon_url = hero_doc.get("Iconhero", "") if hero_doc else ""
-
-    # 4) สร้าง record ใหม่ (ตัด setitems_id ออก เพราะใช้ counter ของเราแทน)
-    record = {
-        "set":             hero_seq1,
-        "hero_id":         hero_id,
-        "hero_name":       hero_name,
-        "hero_icon":       icon_url,
-        "items":           items_models
+    # Insert ชุดใหม่
+    new_doc = {
+        "set":       next_set,
+        "hero_id":   hero_id,
+        "hero_name": hero_name,
+        "hero_icon": hero_icon,
+        "items":     items,
     }
-    
+    setitems_collection.insert_one(new_doc)
 
-    # 5) บันทึกลง MongoDB (sync PyMongo)
-    setitems_collection.insert_one(record)
-
-    # 6) ส่งกลับหรือ redirect ตามต้องการ
-    return RedirectResponse("/build_set_items?success=1", status_code=303)
+    return JSONResponse({"status": "ok", "set": next_set})
 
 #--------------------- Setitems SETITEMS ROUTES --------------------
 @app.get(
@@ -320,7 +294,7 @@ def get_setitems_by_hero(hero_id: str):
     ))
     results = []
     for doc in docs:
-        # ดึงค่า set ออกมาก่อน (แล้วลบออกจาก dict หลัก)
+        # ดึงค่า set ออกมาก่อน (แล้วลบออกจาก dict หลัก)  
         set_val = doc.pop("set", None)
         # สร้าง dict ใหม่ ให้ "set" อยู่บรรทัดแรก
         reordered = {"set": set_val, **doc}
@@ -329,71 +303,40 @@ def get_setitems_by_hero(hero_id: str):
     return jsonable_encoder(results)
 
 
-#-------------------- edit setitems_id SETITEMS ROUTES --------------------
-@app.put(
-    "/sets/{set_id}",
-    response_model=CreateItemBuild,
-    summary="อัปเดตเซตไอเทม",
-)
-def update_item_build(set_id: int, payload: CreateItemBuild):
-    # ยืนยันว่ามีชุดนี้อยู่
-    existing = setitems_collection.find_one({"setitems_id": set_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Set not found")
 
-    # ดึงข้อมูลไอเทมใหม่
-    items = []
-    for iid in payload.item_ids:
-        doc = items_collection.find_one({"Item_ID": iid})
-        if not doc:
-            raise HTTPException(status_code=404, detail=f"Item {iid} not found")
-        flat = { k: str(v) for k, v in doc.items() if k != "_id" }
-        items.append(convert_row_to_item(flat))
-
-# อัปเดตใน Mongo
-    updated = {
-        "hero_id": payload.hero_id,
-        "items":   [item.dict() for item in items]
-    }
-    setitems_collection.update_one(
-        {"setitems_id": set_id},
-        {"$set": updated}
+#---------------------- Delete_Set_Items ROUTES --------------------
+@app.get("/delete_set_items", response_class=HTMLResponse)
+def page_delete_set_items(request: Request):
+    sets = []
+    for doc in setitems_collection.find().sort("set", 1):
+        sets.append({
+            "id": str(doc["_id"]),
+            "set": doc.get("set"),
+            "hero_id": doc.get("hero_id"),
+            "hero_name": doc.get("hero_name"),
+            "hero_icon": doc.get("hero_icon"),
+        })
+    return templates.TemplateResponse(
+        "delete_set_items.html",
+        {"request": request, "sets": sets}
     )
-    # ส่งกลับข้อมูลใหม่
-    return {**{"setitems_id": set_id}, **updated}
-#-----------------------------------------------------------------------
-@app.patch(
-    "/sets/{set_id}",
-    response_model=CreateItemBuild,
-    summary="อัปเดตเฉพาะบางฟิลด์ของชุดไอเทม",
-)
-def patch_item_build(set_id: int, payload: PatchItemBuild):
-    # 1) ดึงของเดิมมาจาก DB
-    doc = setitems_collection.find_one({"setitems_id": set_id}, {"_id": 0})
+
+#----------------- API ลบชุดเดียว (delete one set) -------------------------------------
+@app.delete("/delete_set_items/{doc_id}")
+def delete_set_items(doc_id: str):
+    obj_id = ObjectId(doc_id)
+    doc = setitems_collection.find_one({"_id": obj_id})
     if not doc:
-        raise HTTPException(404, "Set not found")
+        raise HTTPException(404, "Not Found")
+    hero_name = doc["hero_name"]
 
-    update_data = {}
-    # 2) ถ้ามี hero_id ใหม่ ให้อัปเดต
-    if payload.hero_id is not None:
-        update_data["hero_id"] = payload.hero_id
-
-    # 3) ถ้ามี item_ids ใหม่ ให้เช็กความยาวและอัปเดต
-    if payload.item_ids is not None:
-        if len(payload.item_ids) != 6:
-            raise HTTPException(422, "item_ids ต้องมี 6 ช่อง")
-        # (คุณอาจจะต้องดึงรายละเอียดจาก itemsInfos เหมือน POST/PUT)
-        update_data["items"] = payload.item_ids  # หรือแปลงเป็น full model เหมือนเดิม
-
-    # 4) ถ้าไม่มีอะไรให้แก้เลย
-    if not update_data:
-        raise HTTPException(400, "ไม่มีข้อมูลอะไรให้อัปเดต")
-
-    # 5) บันทึกลง DB
-    setitems_collection.update_one(
-        {"setitems_id": set_id},
-        {"$set": update_data}
+    # ลบเอกสารชุดนั้น
+    setitems_collection.delete_one({"_id": obj_id})
+    # decrement counter ของฮีโร่คนนั้น ลง 1
+    counters_collection.find_one_and_update(
+        {"_id": f"set_{hero_name}"},
+        {"$inc": {"seq": -1}},
+        return_document=ReturnDocument.AFTER
     )
 
-    # 6) ดึงของใหม่ส่งกลับ
-    return setitems_collection.find_one({"setitems_id": set_id}, {"_id": 0})
+    return {"status": "deleted"}

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>Delete Set Item</title>
+  <script src="/static/js/delete_set_items.js" defer></script>
+  <style>
+    .card {
+      border: 2px solid #000;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 8px 0;
+      position: relative;
+    }
+    .card button {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      padding: 6px 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Delete Set Item</h1>
+  {% for doc in sets %}
+  <div class="card"
+      data-id="{{ doc.id }}"
+      data-set="{{ doc.set }}"
+      data-hero="{{ doc.hero_id }}">
+    <p>set: {{ doc.set }}</p>
+    <p>hero_id: "{{ doc.hero_id }}"</p>
+    <p>hero_name: "{{ doc.hero_name }}"</p>
+    <p>hero_icon: "{{ doc.hero_icon }}"</p>
+    <button class="btn-delete">delete</button>
+  </div>
+  {% endfor %}
+
+</body>
+</html>
