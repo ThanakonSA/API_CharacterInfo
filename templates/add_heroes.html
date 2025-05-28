@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>เพิ่มฮีโร่ใหม่</title>
+  <style>
+    .preview-img {
+      max-width: 200px;
+      max-height: 200px;
+      display: block;
+      margin-bottom: 1rem;
+    }
+    form > div { margin-bottom: .5rem; }
+    label { font-weight: bold; display: block; margin-bottom: .2rem; }
+    input[type="text"], input[type="file"] { width: 300px; }
+  </style>
+</head>
+<body>
+  <h1>เพิ่มฮีโร่ใหม่</h1>
+  <form id="form-add-hero" enctype="multipart/form-data">
+    <!-- ——— ฟิลด์ข้อความ ——————————————————— -->
+    <div><label>Hero_ID</label><input type="text" name="hero_id"></div>
+    <div><label>HeroName</label><input type="text" name="hero_name"></div>
+    <div><label>Role</label><input type="text" name="role"></div>
+    <div><label>Specialty</label><input type="text" name="specialty"></div>
+    <div><label>Lane_Recc</label><input type="text" name="lane_recc"></div>
+    <div><label>Basic_attack_type</label><input type="text" name="basic_attack_type"></div>
+
+    <div><label>Price_Battle_Points</label><input type="text" name="price_battle_points"></div>
+    <div><label>Price_Diamonds</label><input type="text" name="price_diamonds"></div>
+    <div><label>Price_hero_fragments</label><input type="text" name="price_hero_fragments"></div>
+    <div><label>Price_Tickets</label><input type="text" name="price_tickets"></div>
+    <div><label>Price_lucky_gem</label><input type="text" name="price_lucky_gem"></div>
+
+    <div><label>PassiveName</label><input type="text" name="passive_name"></div>
+    <div><label>PassiveDetail</label><input type="text" name="passive_detail"></div>
+
+    <div><label>Skill_1_Name</label><input type="text" name="skill_1_name"></div>
+    <div><label>Skill_1_Detail</label><input type="text" name="skill_1_detail"></div>
+    <div><label>Skill_2_Name</label><input type="text" name="skill_2_name"></div>
+    <div><label>Skill_2_Detail</label><input type="text" name="skill_2_detail"></div>
+    <div><label>Skill_3_Name</label><input type="text" name="skill_3_name"></div>
+    <div><label>Skill_3_Detail</label><input type="text" name="skill_3_detail"></div>
+    <div><label>Skill_4_Name</label><input type="text" name="skill_4_name"></div>
+    <div><label>Skill_4_Detail</label><input type="text" name="skill_4_detail"></div>
+
+    <div><label>Swap_Skill_1_Name</label><input type="text" name="swap_skill_1_name"></div>
+    <div><label>Swap_Skill_1_Detail</label><input type="text" name="swap_skill_1_detail"></div>
+    <div><label>Swap_Skill_2_Name</label><input type="text" name="swap_skill_2_name"></div>
+    <div><label>Swap_Skill_2_Detail</label><input type="text" name="swap_skill_2_detail"></div>
+    <div><label>Swap_Skill_3_Name</label><input type="text" name="swap_skill_3_name"></div>
+    <div><label>Swap_Skill_3_Detail</label><input type="text" name="swap_skill_3_detail"></div>
+
+    <div><label>Durability</label><input type="text" name="durability"></div>
+    <div><label>Offense</label><input type="text" name="offense"></div>
+    <div><label>Control_effects</label><input type="text" name="control_effects"></div>
+    <div><label>Difficulty</label><input type="text" name="difficulty"></div>
+
+    <div><label>HP</label><input type="text" name="hp"></div>
+    <div><label>HP_Regen</label><input type="text" name="hp_regen"></div>
+    <div><label>Armor_HP</label><input type="text" name="armor_hp"></div>
+    <div><label>Mana</label><input type="text" name="mana"></div>
+    <div><label>Mana_Regen</label><input type="text" name="mana_regen"></div>
+    <div><label>Energy</label><input type="text" name="energy"></div>
+    <div><label>Energy_Regen</label><input type="text" name="energy_regen"></div>
+
+    <div><label>Physical_Attack</label><input type="text" name="physical_attack"></div>
+    <div><label>Magic_Power</label><input type="text" name="magic_power"></div>
+    <div><label>Physical_Defense</label><input type="text" name="physical_defense"></div>
+    <div><label>Magic_Defense</label><input type="text" name="magic_defense"></div>
+    <div><label>Attack_Speed</label><input type="text" name="attack_speed"></div>
+    <div><label>Attack_Speed_Ratio</label><input type="text" name="attack_speed_ratio"></div>
+    <div><label>Critical_Chance</label><input type="text" name="critical_chance"></div>
+    <div><label>Critical_Damage</label><input type="text" name="critical_damage"></div>
+    <div><label>Movement_Speed</label><input type="text" name="movement_speed"></div>
+    <div><label>Basic_Attack_Range</label><input type="text" name="basic_attack_range"></div>
+
+    <!-- ——— ไฟล์รูป (name ต้องตรงกัน) ——————————————————— -->
+    <div>
+      <label>Iconhero</label>
+      <img id="preview-iconhero" class="preview-img" src="" alt="Preview Iconhero">
+      <input type="file" name="iconhero" accept="image/*">
+    </div>
+    <div>
+      <label>Imagehero</label>
+      <img id="preview-imagehero" class="preview-img" src="" alt="Preview Imagehero">
+      <input type="file" name="imagehero" accept="image/*">
+    </div>
+    <div>
+      <label>Passive_icon</label>
+      <img id="preview-passive" class="preview-img" src="" alt="Preview Passive">
+      <input type="file" name="passive_icon" accept="image/*">
+    </div>
+    <div>
+      <label>Skill_1_icon</label>
+      <img id="preview-s1" class="preview-img" src="" alt="Preview S1">
+      <input type="file" name="skill_1_icon" accept="image/*">
+    </div>
+    <div>
+      <label>Skill_2_icon</label>
+      <img id="preview-s2" class="preview-img" src="" alt="Preview S2">
+      <input type="file" name="skill_2_icon" accept="image/*">
+    </div>
+    <div>
+      <label>Skill_3_icon</label>
+      <img id="preview-s3" class="preview-img" src="" alt="Preview S3">
+      <input type="file" name="skill_3_icon" accept="image/*">
+    </div>
+    <div>
+      <label>Skill_4_icon</label>
+      <img id="preview-s4" class="preview-img" src="" alt="Preview S4">
+      <input type="file" name="skill_4_icon" accept="image/*">
+    </div>
+    <div>
+      <label>Swap_Skill_1_icon</label>
+      <img id="preview-sw1" class="preview-img" src="" alt="Preview SW1">
+      <input type="file" name="swap_skill_1_icon" accept="image/*">
+    </div>
+    <div>
+      <label>Swap_Skill_2_icon</label>
+      <img id="preview-sw2" class="preview-img" src="" alt="Preview SW2">
+      <input type="file" name="swap_skill_2_icon" accept="image/*">
+    </div>
+    <div>
+      <label>Swap_Skill_3_icon</label>
+      <img id="preview-sw3" class="preview-img" src="" alt="Preview SW3">
+      <input type="file" name="swap_skill_3_icon" accept="image/*">
+    </div>
+
+    <button type="submit">บันทึกฮีโร่</button>
+  </form>
+
+  <script src="/static/js/add_heroes.js"></script>
+</body>
+</html>
