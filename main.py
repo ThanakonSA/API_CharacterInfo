@@ -20,16 +20,16 @@ app = FastAPI()
 
 tags_metadata = [
     {
-        "name": "default",
-        "description": "Endpoints กลุ่มทั่วไป (ยังไม่กำหนด tags)"
-    },
-    {
         "name": "heroes",
         "description": "จัดการข้อมูลฮีโร่"
     },
     {
         "name": "items",
-        "description": "จัดการข้อมูลไอเท็ม"
+        "description": "จัดการข้อมูลไอเทม"
+    },
+    {
+        "name": "setitems",
+        "description": "ข้อมูลของเซตไอเทม"
     },
 ]
 app = FastAPI(
@@ -77,8 +77,8 @@ items: List[ItemMainModel] = [
     "/heroes/{hero_id}",
     response_model=HeroFullModel,
     tags=["heroes"],
-    summary="ดึงฮีโร่ตามไอดี",
-    description="รับ Hero_ID แล้วคืนข้อมูลฮีโร่ทั้งหมดแบบ nested structure"
+    summary="ดึงฮีโร่ตามไอดี (full)",
+    description="รับ Hero_ID แล้วคืนข้อมูลฮีโร่แบบเต็ม"
 )
 def get_hero_by_id(hero_id: str):
     doc = heroes_collection.find_one({"Hero_ID": hero_id})
@@ -92,8 +92,8 @@ def get_hero_by_id(hero_id: str):
     "/heroes",
     response_model=List[HeroFullModel],
     tags=["heroes"],
-    summary="ดึงข้อมูลฮีโร่ทั้งหมด",
-    description="คืนรายการฮีโร่ทุกตัวพร้อมรายละเอียดครบทุกฟิลด์"
+    summary="ดึงฮีโร่ตามไอดี (full)",
+    description="รับ Hero_ID แล้วคืนข้อมูลฮีโร่แบบเต็ม"
 )
 def list_all_heroes():
     docs = list(heroes_collection.find())
@@ -108,8 +108,8 @@ def list_all_heroes():
     "/heroesmain/{hero_id}",
     response_model=HeroFullModel,
     tags=["heroes"],
-    summary="ดึงฮีโร่ตามไอดี",
-    description="รับ Hero_ID แล้วคืนข้อมูลฮีโร่ทั้งหมดแบบ nested structure"
+    summary="ดึงฮีโร่ตามไอดี (main)",
+    description="รับ Hero_ID แล้วคืนข้อมูลฮีโร่แบบย่อ"
 )
 def get_hero_heroesmain(hero_id: str):
     doc = heroes_collection.find_one({"Hero_ID": hero_id})
@@ -123,8 +123,8 @@ def get_hero_heroesmain(hero_id: str):
     "/heroesmain",
     response_model=List[HeroMainModel],
     tags=["heroes"],
-    summary="ดึงข้อมูลฮีโร่บางส่วน",
-    description="รับ Hero_ID แล้วคืนข้อมูลฮีโร่ทั้งหมดแบบ nested structure"
+    summary="ดึงฮีโร่ทั้งหมด (main)",
+    description="คืนรายการฮีโร่ทุกตัวแบบย่อ (HeroMainModel)"
 )
 def list_all_heroes():
     docs = list(heroes_collection.find())
@@ -149,7 +149,7 @@ def list_all_heroes():
     response_model=ItemFullModel,
     tags=["items"],
     summary="ดึงไอเทมตามไอดี",
-    description="รับ Item_ID แล้วคืนข้อมูลไอเทมทั้งหมดแบบ nested structure"
+    description="รับ Item_ID แล้วคืนข้อมูลไอเทมทั้งหมด"
 )
 def get_item_full(item_id: str):
     doc = items_collection.find_one({"Item_ID": item_id})
@@ -163,8 +163,8 @@ def get_item_full(item_id: str):
     "/items", 
     response_model=List[ItemFullModel],
     tags=["items"],
-    summary="ดึงข้อมูลไอเทมทั้งหมด",
-    description="คืนรายการไอเทมทุกอย่างพร้อมรายละเอียดครบทุกฟิลด์"
+    summary="ดึงไอเทมทั้งหมด",
+    description="คืนรายการไอเทมทุกชิ้นพร้อมรายละเอียด"
 )
 def list_all_items():
     docs = list(items_collection.find())
@@ -175,7 +175,11 @@ def list_all_items():
     return items
 
 #-------------------- Build_Set_Items -----------------------------------
-@app.get("/build_set_items", response_class=HTMLResponse)
+@app.get("/build_set_items", response_class=HTMLResponse,
+        tags=["setitems"],
+        summary="หน้า สร้างชุดไอเทม",
+        description="แสดงฟอร์มเลือกฮีโร่+ไอเทม เพื่อสร้างชุดใหม่"
+        )
 async def build_set_items_page(request: Request):
     # ── ดึงฮีโร่จาก collection จริง ────────────────────────────────
     hero_docs = list(heroes_collection.find({}))
@@ -192,7 +196,7 @@ async def build_set_items_page(request: Request):
         for doc in hero_docs
     ]
 
-    # ── ดึงไอเท็มจาก collection จริง ───────────────────────────────
+    # ── ดึงไอเทมจาก collection จริง ───────────────────────────────
     item_docs = list(items_collection.find({}))
     items = [
         ItemMainModel(
@@ -218,35 +222,60 @@ async def build_set_items_page(request: Request):
     })
 
 # รับข้อมูลฟอร์มเมื่อกด Submit
-@app.post("/build_set_items")
+@app.post(
+    "/build_set_items",
+    tags=["setitems"],
+    summary="บันทึกชุดไอเทมใหม่",
+    description="รับข้อมูลจากฟอร์มแล้ว insert ลง MongoDB"
+)
 async def build_set_items(request: Request):
-    payload = await request.json()
+    payload   = await request.json()
     hero_id   = payload["hero_id"]
     hero_name = payload["hero_name"]
     hero_icon = payload["hero_icon"]
-    items     = payload.get("items", [])
+    raw_items = payload.get("items", [])
 
-    # หาชุดล่าสุดของฮีโร่นี้ แล้ว +1
+    # ── Enrich ให้ข้อมูลเต็ม ────────────────────────────────
+    enriched = []
+    for it in raw_items:
+        info    = it.get("iteminfo", it)      # รองรับทั้ง {iteminfo:{…}} หรือ {item_id:…}
+        item_id = info.get("item_id")
+        if not item_id:
+            continue
+        doc = items_collection.find_one({"Item_ID": item_id})
+        if not doc:
+            continue
+        enriched.append({
+            "iteminfo": {
+                "item_id":   doc["Item_ID"],
+                "item_name": doc["ItemName"],
+                "type_item": doc["Type_Item"],
+                "price":     str(doc["Price"]),
+                "icon":      doc["Icon_Item"],
+            }
+        })
+
+    # ── หาชุดล่าสุด +1 ───────────────────────────────────
     last = list(setitems_collection
                 .find({"hero_name": hero_name})
                 .sort("set", -1)
                 .limit(1))
     next_set = (last[0]["set"] if last else 0) + 1
 
-    # อัปเดต counters
+    # ── อัปเดต counters ─────────────────────────────────
     counters_collection.update_one(
         {"_id": f"set_{hero_name}"},
         {"$set": {"seq": next_set}},
         upsert=True
     )
 
-    # Insert ชุดใหม่
+    # ── Insert เอกสารชุดใหม่ ─────────────────────────────
     new_doc = {
         "set":       next_set,
         "hero_id":   hero_id,
         "hero_name": hero_name,
         "hero_icon": hero_icon,
-        "items":     items,
+        "items":     enriched,     # <-- ต้องใช้ enriched ไม่ใช่ global items
     }
     setitems_collection.insert_one(new_doc)
 
@@ -256,8 +285,9 @@ async def build_set_items(request: Request):
 @app.get(
     "/setitems",
     response_model=List[dict],
-    summary="ดึงข้อมูลชุดไอเทมทั้งหมด",
-    description="คืนค่าเป็นลิสต์ของทุกเซตไอเทมในฐานข้อมูล"
+    tags=["setitems"],
+    summary="ดึงชุดไอเทมทั้งหมด",
+    description="คืน JSON ของทุกชุดไอเทม"
 )
 def get_setitems():
     # 1) ดึงเอกสารทั้งหมด (ไม่เอา _id ของ MongoDB)
@@ -283,8 +313,9 @@ def get_setitems():
 @app.get(
     "/setitems/{hero_id}",
     response_model=List[dict],
-    summary="ดึงชุดไอเท็มของฮีโร่โดย hero_id",
-    description="รับ hero_id ใน path → คืนชุดไอเท็มทั้งหมดที่เก็บไว้สำหรับฮีโร่คนนั้น"
+    tags=["setitems"],
+    summary="ดึงชุดไอเทมของฮีโร่",
+    description="รับ hero_id → คืนชุดไอเทมทั้งหมดของฮีโร่นั้น"
 )
 def get_setitems_by_hero(hero_id: str):
     # ดึงข้อมูลจาก MongoDB (รวมฟิลด์ "set" ที่เราบันทึกไว้)
@@ -305,7 +336,10 @@ def get_setitems_by_hero(hero_id: str):
 
 
 #---------------------- Delete_Set_Items ROUTES --------------------
-@app.get("/delete_set_items", response_class=HTMLResponse)
+@app.get("/delete_set_items", response_class=HTMLResponse,
+        tags=["setitems"],
+        summary="หน้า ลบชุดไอเทม",
+        description="แสดงรายการชุดไอเทมทั้งหมด พร้อมปุ่ม Delete")
 def page_delete_set_items(request: Request):
     sets = []
     for doc in setitems_collection.find().sort("set", 1):
@@ -322,7 +356,11 @@ def page_delete_set_items(request: Request):
     )
 
 #----------------- API ลบชุดเดียว (delete one set) -------------------------------------
-@app.delete("/delete_set_items/{doc_id}")
+@app.delete("/delete_set_items/{doc_id}",
+            tags=["setitems"],
+            summary="ลบชุดไอเทม",
+            description="ลบ document setitems ตาม ID ที่ส่งมา"
+            )
 def delete_set_items(doc_id: str):
     obj_id = ObjectId(doc_id)
     doc = setitems_collection.find_one({"_id": obj_id})
