@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>Delete Heroes</title>
+  <script src="/static/js/delete_heroes.js" defer></script>
+  <style>
+    .card {
+      border: 2px solid #000;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 8px 0;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      background: #181c2f;
+      color: #ffffff;
+    }
+    .card img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #7c3aed;
+      background: #fff;
+    }
+    .card .info {
+      flex: 1;
+    }
+    .card button {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      padding: 6px 18px;
+      background: #a855f7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    h1 { color: #000000; }
+  </style>
+</head>
+<body>
+  <h1>Delete Heroes</h1>
+  {% for hero in heroes %}
+  <div class="card"
+      data-id="{{ hero._id }}"
+      data-hero-id="{{ hero.Hero_ID }}">
+    <img src="{{ hero.Iconhero or '/static/icons/default.png' }}" alt="">
+    <div class="info">
+      <div><b>{{ hero.HeroName }}</b></div>
+      <div>Hero_ID: {{ hero.Hero_ID }}</div>
+      <div>Role: {{ hero.Role }}</div>
+    </div>
+    <button class="btn-delete">delete</button>
+  </div>
+  {% endfor %}
+</body>
+</html>

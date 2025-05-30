@@ -1,0 +1,60 @@
+body {
+  font-family: sans-serif;
+  padding: 2rem;
+}
+
+form {
+  max-width: 800px;
+  margin-top: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+label {
+  width: 200px;
+  font-weight: bold;
+}
+
+input[type="text"] {
+  flex: 1;
+  padding: 4px;
+}
+
+.buttons {
+  margin-top: 1rem;
+}
+
+/* เพิ่มในไฟล์ CSS ของคุณ */
+.sidebar-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+  cursor: pointer;
+  position: relative;
+}
+.sidebar-hero .arrow {
+  position: absolute;
+  left: -38px;
+  top: 30px;
+}
+.hero-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #7c3aed;
+  background: #fff;
+}
+.hero-name {
+  margin-top: 8px;
+  background: #a855f7;
+  border-radius: 16px;
+  padding: 4px 18px;
+  font-size: 1.1em;
+  color: #fff;
+}

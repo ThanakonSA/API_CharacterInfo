@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>เพิ่มไอเทมใหม่</title>
+  <style>
+    .preview-img {
+      max-width: 120px;
+      max-height: 120px;
+      display: block;
+      margin-bottom: 1rem;
+      border-radius: 50%;
+      border: 4px solid #7c3aed;
+      background: #fff;
+      object-fit: cover;
+    }
+    form > div { margin-bottom: .7rem; }
+    label { font-weight: bold; display: block; margin-bottom: .2rem; color: #fff; }
+    input[type="text"], input[type="file"] { width: 300px; }
+    body { background: #0a1440; color: #fff; font-family: 'Kanit', sans-serif; }
+    h1 { font-size: 2.2em; margin-bottom: 24px; color: #fff; }
+    button[type="submit"] {
+      padding: 12px 36px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #22c55e;
+      color: #fff;
+      margin-top: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>เพิ่มไอเทมใหม่</h1>
+  <form id="form-add-item" enctype="multipart/form-data" autocomplete="off">
+    <div><label>Item_ID</label><input type="text" name="Item_ID" required></div>
+    <div><label>ItemName</label><input type="text" name="ItemName" required></div>
+    <div><label>Type_Item</label><input type="text" name="Type_Item" required></div>
+    <div><label>Passive</label><input type="text" name="Passive"></div>
+    <div><label>Price</label><input type="text" name="Price"></div>
+    <div><label>Physical_Attack</label><input type="text" name="Physical_Attack"></div>
+    <div><label>Magic_Power</label><input type="text" name="Magic_Power"></div>
+    <div><label>HP</label><input type="text" name="HP"></div>
+    <div><label>HP_Regen</label><input type="text" name="HP_Regen"></div>
+    <div><label>Mana</label><input type="text" name="Mana"></div>
+    <div><label>Mana_Regen</label><input type="text" name="Mana_Regen"></div>
+    <div><label>Physical_Defense</label><input type="text" name="Physical_Defense"></div>
+    <div><label>Magic_Defense</label><input type="text" name="Magic_Defense"></div>
+    <div><label>Lifesteal%</label><input type="text" name="Lifesteal_"></div>
+    <div><label>Spell_Vamp%</label><input type="text" name="Spell_Vamp_"></div>
+    <div><label>Hybrid_Lifesteal%</label><input type="text" name="Hybrid_Lifesteal_"></div>
+    <div><label>Cooldown_Reduction%</label><input type="text" name="Cooldown_Reduction_"></div>
+    <div><label>Attack_Speed%</label><input type="text" name="Attack_Speed_"></div>
+    <div><label>Adaptive_Attack</label><input type="text" name="Adaptive_Attack"></div>
+    <div><label>Adaptive_Attack%</label><input type="text" name="Adaptive_Attack_"></div>
+    <div><label>Physical_Penetration</label><input type="text" name="Physical_Penetration"></div>
+    <div><label>Physical_Penetration%</label><input type="text" name="Physical_Penetration_"></div>
+    <div><label>Magic_Penetration</label><input type="text" name="Magic_Penetration"></div>
+    <div><label>Magic_Penetration%</label><input type="text" name="Magic_Penetration_"></div>
+    <div><label>Critical_Chance%</label><input type="text" name="Critical_Chance_"></div>
+    <div><label>Critical_Damage%</label><input type="text" name="Critical_Damage_"></div>
+    <div><label>Critical_Damage_Reduction%</label><input type="text" name="Critical_Damage_Reduction_"></div>
+    <div><label>Movement_Speed</label><input type="text" name="Movement_Speed"></div>
+    <div><label>Movement_Speed%</label><input type="text" name="Movement_Speed_"></div>
+    <div><label>Slow_Reduction%</label><input type="text" name="Slow_Reduction_"></div>
+    <div><label>Healing_Effect%</label><input type="text" name="Healing_Effect_"></div>
+
+    <div>
+      <label>Icon_Item</label>
+      <img id="preview-icon-item" class="preview-img" src="/static/icons/default_item.png" alt="Preview Icon_Item">
+      <input type="file" name="Icon_Item" accept="image/*">
+    </div>
+
+    <button type="submit">บันทึกไอเทม</button>
+  </form>
+  <script src="/static/js/add_item.js"></script>
+</body>
+</html>

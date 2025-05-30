@@ -1,0 +1,300 @@
+<!-- templates/edit_heroes.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Hero</title>
+    <style>
+        body {
+            background: #0a1440;
+            color: #fff;
+            font-family: 'Kanit', sans-serif;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 220px;
+            background: #000;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+        .hero-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .hero-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            position: relative;
+        }
+        .hero-item.selected::before {
+            content: '';
+            position: absolute;
+            left: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: solid transparent;
+            border-width: 18px 18px 18px 0;
+            border-right-color: #4ed0ff;
+        }
+        .hero-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #7c3aed;
+            background: #fff;
+        }
+        .hero-name {
+            margin-top: 8px;
+            background: #a855f7;
+            border-radius: 16px;
+            padding: 4px 18px;
+            font-size: 1.1em;
+            color: #fff;
+        }
+        .main-content {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+        .form-row {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            margin-bottom: 4px;
+            font-size: 1em;
+            color: #fff;
+        }
+        .form-group input {
+            background: #1e2a5a;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #fff;
+            font-size: 1em;
+            outline: none;
+        }
+        .btn-row {
+            margin-top: 30px;
+            display: flex;
+            gap: 18px;
+        }
+        .btn {
+            padding: 12px 36px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-edit {
+            background: #a855f7;
+            color: #fff;
+        }
+        .btn-save {
+            background: #22c55e;
+            color: #fff;
+        }
+        .btn-cancel {
+            background: #ef4444;
+            color: #fff;
+        }
+        .note {
+            font-size: 0.95em;
+            color: #a3e635;
+            margin-top: 10px;
+        }
+        .icon-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 32px;
+        }
+        .icon-section img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid #7c3aed;
+            background: #fff;
+            object-fit: cover;
+        }
+        .icon-section label {
+            margin-top: 8px;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Sidebar: Hero List -->
+    <div class="sidebar">
+        <ul class="hero-list" id="heroList">
+            <!-- Hero items will be rendered here by JS -->
+        </ul>
+    </div>
+    <!-- Main Content: Edit Form -->
+    <div class="main-content">
+        <h1>Edit Hero</h1>
+        <form id="editHeroForm" autocomplete="off">
+            <div id="formFields">
+                <!-- Form fields will be rendered here by JS -->
+            </div>
+            <div class="icon-section">
+                <img id="heroIconPreview" src="/static/icons/default.png" alt="Hero Icon">
+                <label>Hero Icon</label>
+            </div>
+            <div class="btn-row">
+                <button type="button" class="btn btn-edit" id="editBtn" onclick="enableEdit()" style="display:none;">EDIT</button>
+                <button type="submit" class="btn btn-save" id="saveBtn" style="display:none;">SAVE</button>
+                <button type="button" class="btn btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display:none;">CANCEL</button>
+            </div>
+            <div class="note" id="formNote"></div>
+        </form>
+    </div>
+</div>
+<script>
+    window.heroes = {{ heroes | tojson }};
+</script>
+<script>
+const heroListEl = document.getElementById('heroList');
+const formFieldsEl = document.getElementById('formFields');
+const editBtn = document.getElementById('editBtn');
+const saveBtn = document.getElementById('saveBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+const formNote = document.getElementById('formNote');
+let heroes = window.heroes || [];
+let selectedHero = null;
+let isEditing = false;
+
+// ฟิลด์ที่ต้องการแสดงในฟอร์ม (เรียงตามภาพ)
+const heroFields = [
+    "Hero_ID", "HeroName", "Role", "Specialty", "Lane_Recc",
+    "Basic_attack_type", "Price_Battle_Points", "Price_Diamonds", "Price_hero_fragments", "Price_Tickets", "Price_lucky_gem",
+    "PassiveName", "PassiveDetail", "Skill_1_Name", "Skill_1_Detail", "Skill_2_Name", "Skill_2_Detail", "Skill_3_Name", "Skill_3_Detail",
+    "Skill_4_Name", "Skill_4_Detail", "Swap_Skill_1_Name", "Swap_Skill_1_Detail", "Swap_Skill_2_Name", "Swap_Skill_2_Detail", "Swap_Skill_3_Name", "Swap_Skill_3_Detail",
+    "Durability", "Offense", "Control_effects", "Difficulty", "HP", "HP_Regen", "Armor_HP", "Mana", "Mana_Regen", "Energy", "Energy_Regen",
+    "Physical_Attack", "Magic_Power", "Physical_Defense", "Magic_Defense", "Attack_Speed", "Attack_Speed_Ratio%", "Critical_Chance%", "Critical_Damage%", "Movement_Speed", "Basic_Attack_Range"
+];
+
+// แสดงรายชื่อฮีโร่ด้านซ้าย
+function renderHeroList() {
+    heroListEl.innerHTML = '';
+    heroes.forEach((hero, idx) => {
+        const li = document.createElement('li');
+        li.className = 'hero-item' + (selectedHero && selectedHero.Hero_ID === hero.Hero_ID ? ' selected' : '');
+        li.onclick = () => selectHero(idx);
+        li.innerHTML = `
+            <img class="hero-img" src="${hero.icon || '/static/icons/default.png'}" alt="">
+            <div class="hero-name">${hero.HeroName || ''}</div>
+        `;
+        heroListEl.appendChild(li);
+    });
+}
+
+// เลือกฮีโร่
+function selectHero(idx) {
+    selectedHero = heroes[idx];
+    isEditing = false;
+    renderHeroList();
+    renderForm(selectedHero);
+    editBtn.style.display = '';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+    formNote.innerHTML = 'ข้อความในฟอร์มนี้ดึงข้อมูลใน mongodb มาแสดงโดยใช้ Hero_ID เป็นตัวตั้ง';
+    // อัปเดตรูปไอคอนตรงกลาง
+    document.getElementById('heroIconPreview').src = selectedHero.icon || '/static/icons/default.png';
+}
+
+// แสดงฟอร์ม
+function renderForm(hero) {
+    let html = '';
+    for (let i = 0; i < heroFields.length; i += 5) {
+        html += '<div class="form-row">';
+        for (let j = i; j < i + 5 && j < heroFields.length; j++) {
+            const field = heroFields[j];
+            html += `
+                <div class="form-group">
+                    <label>${field}</label>
+                    <input name="${field}" value="${hero[field] || ''}" ${isEditing ? '' : 'readonly'}>
+                </div>
+            `;
+        }
+        html += '</div>';
+    }
+    formFieldsEl.innerHTML = html;
+}
+
+// เปิดโหมดแก้ไข
+function enableEdit() {
+    isEditing = true;
+    renderForm(selectedHero);
+    editBtn.style.display = 'none';
+    saveBtn.style.display = '';
+    cancelBtn.style.display = '';
+    formNote.innerHTML = 'กด SAVE เพื่อบันทึก กด CANCEL เพื่อยกเลิก';
+}
+
+// ยกเลิกการแก้ไข
+function cancelEdit() {
+    isEditing = false;
+    renderForm(selectedHero);
+    editBtn.style.display = '';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+    formNote.innerHTML = 'ยกเลิกการแก้ไขแล้ว';
+}
+
+// กด SAVE
+document.getElementById('editHeroForm').onsubmit = async function(e) {
+    e.preventDefault();
+    if (!isEditing) return;
+    const formData = new FormData(e.target);
+    const data = {};
+    heroFields.forEach(f => data[f] = formData.get(f));
+    // ส่ง PUT ไป backend
+    const res = await fetch(`/heroes/${selectedHero.Hero_ID}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    if (res.ok) {
+        Object.assign(selectedHero, data);
+        isEditing = false;
+        renderForm(selectedHero);
+        editBtn.style.display = '';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        formNote.innerHTML = 'บันทึกสำเร็จ!';
+    } else {
+        formNote.innerHTML = 'เกิดข้อผิดพลาดในการบันทึก';
+    }
+};
+
+// เริ่มต้น
+if (heroes.length > 0) {
+    renderHeroList();
+    selectHero(0);
+}
+</script>
+</body>
+</html>

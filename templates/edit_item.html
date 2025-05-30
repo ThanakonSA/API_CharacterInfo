@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Items</title>
+    <style>
+        body { background: #0a1440; color: #fff; font-family: 'Kanit', sans-serif; }
+        .container { display: flex; height: 100vh; }
+        .sidebar { width: 220px; background: #000; padding: 20px 0; overflow-y: auto; }
+        .item-list { list-style: none; padding: 0; margin: 0; }
+        .item-item { display: flex; flex-direction: column; align-items: center; margin-bottom: 30px; cursor: pointer; position: relative; }
+        .item-item.selected::before {
+            content: '';
+            position: absolute;
+            left: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: solid transparent;
+            border-width: 18px 18px 18px 0;
+            border-right-color: #4ed0ff;
+        }
+        .item-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid #7c3aed; background: #fff; }
+        .item-name { margin-top: 8px; background: #a855f7; border-radius: 16px; padding: 4px 18px; font-size: 1.1em; color: #fff; }
+        .main-content { flex: 1; padding: 40px 60px; overflow-y: auto; }
+        h1 { font-size: 2.5em; margin-bottom: 30px; color: #fff; letter-spacing: 2px; }
+        .form-row { display: flex; gap: 18px; margin-bottom: 18px; }
+        .form-group { flex: 1; display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 4px; font-size: 1em; color: #fff; }
+        .form-group input { background: #1e2a5a; border: none; border-radius: 8px; padding: 8px 10px; color: #fff; font-size: 1em; outline: none; }
+        .btn-row { margin-top: 30px; display: flex; gap: 18px; }
+        .btn { padding: 12px 36px; font-size: 1.2em; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .btn-edit { background: #a855f7; color: #fff; }
+        .btn-save { background: #22c55e; color: #fff; }
+        .btn-cancel { background: #ef4444; color: #fff; }
+        .note { margin-top: 18px; color: #a855f7; }
+        .icon-section { display: flex; flex-direction: column; align-items: center; margin-top: 32px; }
+        .icon-section img { width: 120px; height: 120px; border-radius: 50%; border: 4px solid #7c3aed; background: #fff; object-fit: cover; }
+        .icon-section label { margin-top: 8px; color: #fff; }
+        .icon-section input[type="file"] { display: none; }
+        .icon-section .change-btn { margin-top: 8px; background: #22c55e; color: #fff; border: none; border-radius: 8px; padding: 8px 24px; font-size: 1em; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Sidebar: Item List -->
+    <div class="sidebar">
+        <ul class="item-list" id="itemList">
+            <!-- Item items will be rendered here by JS -->
+        </ul>
+    </div>
+    <!-- Main Content: Edit Form -->
+    <div class="main-content">
+        <h1>Edit Items</h1>
+        <form id="editItemForm" autocomplete="off">
+            <div id="formFields">
+                <!-- Form fields will be rendered here by JS -->
+            </div>
+            <div class="icon-section">
+                <img id="iconPreview" src="/static/icons/default_item.png" alt="Icon_Item">
+                <label>Icon_Item</label>
+            </div>
+            <div class="btn-row">
+                <button type="button" class="btn btn-edit" id="editBtn" style="display:none;">EDIT</button>
+                <button type="submit" class="btn btn-save" id="saveBtn" style="display:none;">SAVE</button>
+                <button type="button" class="btn btn-cancel" id="cancelBtn" style="display:none;">CANCEL</button>
+            </div>
+            <div class="note" id="formNote"></div>
+        </form>
+    </div>
+</div>
+<script>
+    window.items = {{ items | tojson }};
+</script>
+<script src="/static/js/edit_item.js"></script>
+</body>
+</html>

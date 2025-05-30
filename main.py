@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Body, Request, Form, Depends, File, UploadFile
+from fastapi import FastAPI, HTTPException, Body, Request, Form, Depends, File, UploadFile, Query, APIRouter
 from pymongo import MongoClient, DESCENDING, ReturnDocument
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
@@ -88,6 +88,17 @@ def get_hero_by_id(hero_id: str):
     flat = { k: str(v) for k, v in doc.items() if k != "_id" }
     return convert_row_to_heroes(flat)
 
+
+@app.put("/heroes/{hero_id}", tags=["heroes"])
+async def update_hero(hero_id: str, data: dict = Body(...)):
+    result = heroes_collection.update_one(
+        {"Hero_ID": hero_id},
+        {"$set": data}
+    )
+    if result.modified_count:
+        return {"status": "ok"}
+    else:
+        return JSONResponse({"status": "not found or not modified"}, status_code=404)
 # ------------------------ HEROES ROUTES ----------------------------
 @app.get(
     "/heroes",
@@ -410,6 +421,15 @@ def save_icon(file: Optional[UploadFile], prefix: str) -> Optional[str]:
         out.write(file.file.read())
     return f"/static/uploads/{fn}"
 
+def choose_image(file: Optional[UploadFile], url: str, prefix: str) -> str:
+    # ถ้ามีไฟล์ให้เซฟและคืน path, ถ้าไม่มีไฟล์แต่มี url ให้คืน url, ถ้าไม่มีทั้งสองให้ "None"
+    if file and file.filename:
+        return save_icon(file, prefix)
+    elif url and url.strip():
+        return url.strip()
+    else:
+        return "None"
+
 @app.post("/add_heroes", tags=["heroes"], summary="เพิ่มฮีโร่ใหม่")
 async def add_hero(
     # ——— ฟิลด์ข้อความ ทุกตัว Optional[str] = Form(None) —————————————————
@@ -463,16 +483,26 @@ async def add_hero(
     basic_attack_range: Optional[str] = Form(None),
 
     # ——— รูป (Optional) ——————————————————————————————————
-    iconhero:           Optional[UploadFile] = File(None),
-    imagehero:          Optional[UploadFile] = File(None),
-    passive_icon:       Optional[UploadFile] = File(None),
-    skill_1_icon:       Optional[UploadFile] = File(None),
-    skill_2_icon:       Optional[UploadFile] = File(None),
-    skill_3_icon:       Optional[UploadFile] = File(None),
-    skill_4_icon:       Optional[UploadFile] = File(None),
-    swap_skill_1_icon:  Optional[UploadFile] = File(None),
-    swap_skill_2_icon:  Optional[UploadFile] = File(None),
-    swap_skill_3_icon:  Optional[UploadFile] = File(None),
+    iconhero: UploadFile = File(None),
+    iconhero_url: str = Form(""),
+    imagehero: UploadFile = File(None),
+    imagehero_url: str = Form(""),
+    passive_icon: UploadFile = File(None),
+    passive_icon_url: str = Form(""),
+    skill_1_icon: UploadFile = File(None),
+    skill_1_icon_url: str = Form(""),
+    skill_2_icon: UploadFile = File(None),
+    skill_2_icon_url: str = Form(""),
+    skill_3_icon: UploadFile = File(None),
+    skill_3_icon_url: str = Form(""),
+    skill_4_icon: UploadFile = File(None),
+    skill_4_icon_url: str = Form(""),
+    swap_skill_1_icon: UploadFile = File(None),
+    swap_skill_1_icons_url: str = Form(""),
+    swap_skill_2_icon: UploadFile = File(None),
+    swap_skill_2_icons_url: str = Form(""),
+    swap_skill_3_icon: UploadFile = File(None),
+    swap_skill_3_icons_url: str = Form(""),
 ):
     # ——— normalize ข้อความเป็น “None” เมื่อว่าง ——————————————————
     hero_id            = norm_str(hero_id)
@@ -525,16 +555,16 @@ async def add_hero(
     basic_attack_range = norm_str(basic_attack_range)
 
     # ——— อัปโหลดไฟล์ (คืน URL หรือ None) ———————————————————
-    iconhero_url     = save_icon(iconhero,      "iconhero")
-    imagehero_url    = save_icon(imagehero,     "imagehero")
-    passive_icon_url = save_icon(passive_icon,  "passive")
-    skill1_icon_url  = save_icon(skill_1_icon,  "skill1")
-    skill2_icon_url  = save_icon(skill_2_icon,  "skill2")
-    skill3_icon_url  = save_icon(skill_3_icon,  "skill3")
-    skill4_icon_url  = save_icon(skill_4_icon,  "skill4")
-    swap1_icon_url   = save_icon(swap_skill_1_icon, "swap1")
-    swap2_icon_url   = save_icon(swap_skill_2_icon, "swap2")
-    swap3_icon_url   = save_icon(swap_skill_3_icon, "swap3")
+    iconhero_val     = choose_image(iconhero, iconhero_url, "iconhero")
+    imagehero_val    = choose_image(imagehero, imagehero_url, "imagehero")
+    passive_icon_val = choose_image(passive_icon, passive_icon_url, "passive")
+    skill1_icon_val  = choose_image(skill_1_icon, skill_1_icon_url, "skill1")
+    skill2_icon_val  = choose_image(skill_2_icon, skill_2_icon_url, "skill2")
+    skill3_icon_val  = choose_image(skill_3_icon, skill_3_icon_url, "skill3")
+    skill4_icon_val  = choose_image(skill_4_icon, skill_4_icon_url, "skill4")
+    swap1_icon_val   = choose_image(swap_skill_1_icon, swap_skill_1_icons_url, "swap1")
+    swap2_icon_val   = choose_image(swap_skill_2_icon, swap_skill_2_icons_url, "swap2")
+    swap3_icon_val   = choose_image(swap_skill_3_icon, swap_skill_3_icons_url, "swap3")
 
     # ——— สร้างเอกสารและ insert ————————————————————————————————
     doc = {
@@ -551,40 +581,40 @@ async def add_hero(
         "Price_Tickets":       price_tickets or "None",
         "Price_lucky_gem":     price_lucky_gem or "None",
 
-        "Iconhero":            iconhero_url or "None",
-        "Imagehero":           imagehero_url or "None",
+        "Iconhero":            iconhero_val,
+        "Imagehero":           imagehero_val,
 
         "PassiveName":         passive_name or "None",
         "PassiveDetail":       passive_detail or "None",
-        "Passive_icon":         passive_icon_url or "None",
+        "Passive_icon":        passive_icon_val or "None",
 
         "Skill_1_Name":        skill_1_name or "None",
         "Skill_1_Detail":      skill_1_detail or "None",
-        "Skill_1_icon":        skill1_icon_url or "None",
+        "Skill_1_icon":        skill1_icon_val or "None",
 
         "Skill_2_Name":        skill_2_name or "None",
         "Skill_2_Detail":      skill_2_detail or "None",
-        "Skill_2_icon":        skill2_icon_url or "None",
+        "Skill_2_icon":        skill2_icon_val or "None",
 
         "Skill_3_Name":        skill_3_name or "None",
         "Skill_3_Detail":      skill_3_detail or "None",
-        "Skill_3_icon":        skill3_icon_url or "None",
+        "Skill_3_icon":        skill3_icon_val or "None",
 
         "Skill_4_Name":        skill_4_name or "None",
         "Skill_4_Detail":      skill_4_detail or "None",
-        "Skill_4_icon":        skill4_icon_url or "None",
+        "Skill_4_icon":        skill4_icon_val or "None",
 
         "Swap_Skill_1_Name":   swap_skill_1_name or "None",
         "Swap_Skill_1_Detail": swap_skill_1_detail or "None",
-        "Swap_Skill_1_icon":   swap1_icon_url or "None",
+        "Swap_Skill_1_icon":   swap1_icon_val or "None",
 
         "Swap_Skill_2_Name":   swap_skill_2_name or "None",
         "Swap_Skill_2_Detail": swap_skill_2_detail or "None",
-        "Swap_Skill_2_icon":   swap2_icon_url or "None",
+        "Swap_Skill_2_icon":   swap2_icon_val or "None",
 
         "Swap_Skill_3_Name":   swap_skill_3_name or "None",
         "Swap_Skill_3_Detail": swap_skill_3_detail or "None",
-        "Swap_Skill_3_icon":   swap3_icon_url or "None",
+        "Swap_Skill_3_icon":   swap3_icon_val or "None",
 
         "Durability":          durability or "None",
         "Offense":             offense or "None",
@@ -607,7 +637,179 @@ async def add_hero(
         "Critical_Damage%":    critical_damage or "None",
         "Movement_Speed":      movement_speed or "None",
         "Basic_Attack_Range":  basic_attack_range or "None",
+        
 
     }
     heroes_collection.insert_one(doc)
     return JSONResponse({"status":"ok","hero_id":hero_id})
+
+#---------------- edit_hero ROUTES --------------------
+@app.get("/edit_heroes_page", response_class=HTMLResponse)
+def edit_heroes_page(request: Request):
+    docs = list(heroes_collection.find())
+    heroes = []
+    for doc in docs:
+        doc = {k: (str(v) if v is not None else "") for k, v in doc.items() if k != "_id"}
+        # เพิ่ม key 'icon' สำหรับใช้ใน JS (ใช้ Iconhero จาก mongo)
+        doc["icon"] = doc.get("Iconhero", "")
+        heroes.append(doc)
+    return templates.TemplateResponse("edit_heroes.html", {"request": request, "heroes": heroes})
+
+#---------------- edit_items POST ROUTES --------------------
+@app.get("/edit_item_page", response_class=HTMLResponse)
+def edit_item_page(request: Request):
+    docs = list(items_collection.find())
+    items = []
+    for doc in docs:
+        doc = {k: (str(v) if v is not None else "") for k, v in doc.items() if k != "_id"}
+        items.append(doc)
+    return templates.TemplateResponse("edit_item.html", {"request": request, "items": items})
+
+@app.put("/items/{item_id}", tags=["items"])
+async def update_item(item_id: str, data: dict = Body(...)):
+    result = items_collection.update_one(
+        {"item_id": item_id},
+        {"$set": data}
+    )
+    if result.modified_count:
+        return {"status": "ok"}
+    else:
+        return JSONResponse({"status": "not found or not modified"}, status_code=404)
+    
+
+#----------------- delete_heroes ROUTES --------------------
+@app.get("/delete_heroes", response_class=HTMLResponse)
+def page_delete_heroes(request: Request):
+    heroes = []
+    for doc in heroes_collection.find().sort("HeroName", 1):
+        doc["_id"] = str(doc["_id"])
+        heroes.append(doc)
+    return templates.TemplateResponse(
+        "delete_heroes.html",
+        {"request": request, "heroes": heroes}
+    )
+
+@app.delete("/delete_heroes/{hero_id}", tags=["heroes"])
+def delete_hero(hero_id: str):
+    doc = heroes_collection.find_one({"Hero_ID": hero_id})
+    if not doc:
+        raise HTTPException(404, "Not Found")
+    heroes_collection.delete_one({"Hero_ID": hero_id})
+    return {"status": "deleted"}
+
+
+#----------------- delete_items ROUTES --------------------
+@app.get("/delete_items", response_class=HTMLResponse)
+def page_delete_items(request: Request):
+    items = []
+    for doc in items_collection.find().sort("ItemName", 1):
+        doc["_id"] = str(doc["_id"])
+        items.append(doc)
+    return templates.TemplateResponse(
+        "delete_items.html",
+        {"request": request, "items": items}
+    )
+
+@app.delete("/delete_items/{item_id}", tags=["items"])
+def delete_item(item_id: str):
+    doc = items_collection.find_one({"Item_ID": item_id})
+    if not doc:
+        raise HTTPException(404, "Not Found")
+    items_collection.delete_one({"Item_ID": item_id})
+    return {"status": "deleted"}
+
+#----------------- add_item ROUTES --------------------
+@app.get(
+    "/add_item_page",
+    response_class=HTMLResponse,
+    tags=["items"],
+    summary="หน้าเพิ่มไอเทมใหม่",
+    description="แสดงฟอร์มอัปโหลดข้อมูลและรูปไอเทม"
+)
+def add_item_page(request: Request):
+    return templates.TemplateResponse("add_item.html", {"request": request})
+@app.post("/add_item")
+async def add_item(
+    request: Request,
+    Item_ID: str = Form(...),
+    ItemName: str = Form(...),
+    Type_Item: str = Form(...),
+    Passive: str = Form(""),
+    Price: str = Form(""),
+    Physical_Attack: str = Form(""),
+    Magic_Power: str = Form(""),
+    HP: str = Form(""),
+    HP_Regen: str = Form(""),
+    Mana: str = Form(""),
+    Mana_Regen: str = Form(""),
+    Physical_Defense: str = Form(""),
+    Magic_Defense: str = Form(""),
+    Lifesteal_: str = Form(""),
+    Spell_Vamp_: str = Form(""),
+    Hybrid_Lifesteal_: str = Form(""),
+    Cooldown_Reduction_: str = Form(""),
+    Attack_Speed_: str = Form(""),
+    Adaptive_Attack: str = Form(""),
+    Adaptive_Attack_: str = Form(""),
+    Physical_Penetration: str = Form(""),
+    Physical_Penetration_: str = Form(""),
+    Magic_Penetration: str = Form(""),
+    Magic_Penetration_: str = Form(""),
+    Critical_Chance_: str = Form(""),
+    Critical_Damage_: str = Form(""),
+    Critical_Damage_Reduction_: str = Form(""),
+    Movement_Speed: str = Form(""),
+    Movement_Speed_: str = Form(""),
+    Slow_Reduction_: str = Form(""),
+    Healing_Effect_: str = Form(""),
+    Icon_Item: UploadFile = File(None)
+):
+    # ตัวอย่างการบันทึกไฟล์ (ถ้ามี)
+    icon_url = None
+    if Icon_Item and Icon_Item.filename:
+        UP = "static/uploads"
+        os.makedirs(UP, exist_ok=True)
+        fn = f"iconitem_{Icon_Item.filename}"
+        path = os.path.join(UP, fn)
+        with open(path, "wb") as out:
+            out.write(await Icon_Item.read())
+        icon_url = f"/static/uploads/{fn}"
+
+    # เตรียม dict สำหรับบันทึก
+    doc = {
+        "Item_ID": Item_ID,
+        "ItemName": ItemName,
+        "Type_Item": Type_Item,
+        "Passive": Passive,
+        "Price": Price,
+        "Physical_Attack": Physical_Attack,
+        "Magic_Power": Magic_Power,
+        "HP": HP,
+        "HP_Regen": HP_Regen,
+        "Mana": Mana,
+        "Mana_Regen": Mana_Regen,
+        "Physical_Defense": Physical_Defense,
+        "Magic_Defense": Magic_Defense,
+        "Lifesteal%": Lifesteal_,
+        "Spell_Vamp%": Spell_Vamp_,
+        "Hybrid_Lifesteal%": Hybrid_Lifesteal_,
+        "Cooldown_Reduction%": Cooldown_Reduction_,
+        "Attack_Speed%": Attack_Speed_,
+        "Adaptive_Attack": Adaptive_Attack,
+        "Adaptive_Attack%": Adaptive_Attack_,
+        "Physical_Penetration": Physical_Penetration,
+        "Physical_Penetration%": Physical_Penetration_,
+        "Magic_Penetration": Magic_Penetration,
+        "Magic_Penetration%": Magic_Penetration_,
+        "Critical_Chance%": Critical_Chance_,
+        "Critical_Damage%": Critical_Damage_,
+        "Critical_Damage_Reduction%": Critical_Damage_Reduction_,
+        "Movement_Speed": Movement_Speed,
+        "Movement_Speed%": Movement_Speed_,
+        "Slow_Reduction%": Slow_Reduction_,
+        "Healing_Effect%": Healing_Effect_,
+        "Icon_Item": icon_url or "",
+    }
+    items_collection.insert_one(doc)
+    return JSONResponse({"status": "ok"})
+
